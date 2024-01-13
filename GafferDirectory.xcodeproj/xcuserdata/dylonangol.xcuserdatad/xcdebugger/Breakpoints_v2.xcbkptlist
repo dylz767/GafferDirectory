@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "C48C940A-9094-4163-92EF-86E8CCE56023"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "8C1A0624-7CEB-4004-9E3C-CD8B1071C098"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "GafferDirectory/GafferDetailsView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1"
+            endingLineNumber = "1"
+            landmarkName = "unknown"
+            landmarkType = "0">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "DEA3E45A-0E3F-4D2C-A847-517DF850DAA9"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "GafferDirectory/UserLoginView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "24"
+            endingLineNumber = "24"
+            landmarkName = "UserLoginView"
+            landmarkType = "14">
+            <Locations>
+               <Location
+                  uuid = "DEA3E45A-0E3F-4D2C-A847-517DF850DAA9 - 6e5923d1c2dcdcb"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "property wrapper backing initializer of GafferDirectory.UserLoginView.isUserSignedUp : Swift.Bool"
+                  moduleName = "GafferDirectory"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/dylonangol/Desktop/Iphone%20app%20projects/GafferDirectory/GafferDirectory/UserLoginView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0"
+                  offsetFromSymbolStart = "20">
+               </Location>
+               <Location
+                  uuid = "DEA3E45A-0E3F-4D2C-A847-517DF850DAA9 - ef8d95010b5b0b5c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GafferDirectory.UserLoginView.init(gaffers: SwiftUI.Binding&lt;Swift.Array&lt;GafferDirectory.User&gt;&gt;) -&gt; GafferDirectory.UserLoginView"
+                  moduleName = "GafferDirectory"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/dylonangol/Desktop/Iphone%20app%20projects/GafferDirectory/GafferDirectory/UserLoginView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "24"
+                  endingLineNumber = "24"
+                  offsetFromSymbolStart = "320">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "4F0A742F-7366-4973-8929-72B115328506"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "GafferDirectory/DataService.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "13"
+            endingLineNumber = "13"
+            landmarkName = "getData()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "597F14EB-2F13-418C-8B92-26E2DBB3E019"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "GafferDirectory/NewDogView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "8"
+            endingLineNumber = "8"
+            landmarkName = "NewDogView"
+            landmarkType = "14">
+            <Locations>
+               <Location
+                  uuid = "597F14EB-2F13-418C-8B92-26E2DBB3E019 - b71d6bf2e99e04f8"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "property wrapper backing initializer of GafferDirectory.NewDogView.newEmail : Swift.String"
+                  moduleName = "GafferDirectory"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/dylonangol/Desktop/Iphone%20app%20projects/GafferDirectory/GafferDirectory/NewDogView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0"
+                  offsetFromSymbolStart = "36">
+               </Location>
+               <Location
+                  uuid = "597F14EB-2F13-418C-8B92-26E2DBB3E019 - b94e3f041082303a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GafferDirectory.NewDogView.init(dataManager: SwiftUI.EnvironmentObject&lt;GafferDirectory.DataManager&gt;) -&gt; GafferDirectory.NewDogView"
+                  moduleName = "GafferDirectory"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/dylonangol/Desktop/Iphone%20app%20projects/GafferDirectory/GafferDirectory/NewDogView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "8"
+                  endingLineNumber = "8"
+                  offsetFromSymbolStart = "144">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "AFCC1E78-A78B-44A1-B4DB-807FDF6B2F49"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "GafferDirectory/Views/ListView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "11"
+            endingLineNumber = "11"
+            landmarkName = "ListView"
+            landmarkType = "14">
+            <Locations>
+               <Location
+                  uuid = "AFCC1E78-A78B-44A1-B4DB-807FDF6B2F49 - dad37458a66827f4"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "property wrapper backing initializer of GafferDirectory.ListView.isSignInViewActive : Swift.Bool"
+                  moduleName = "GafferDirectory"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/dylonangol/Desktop/Iphone%20app%20projects/GafferDirectory/GafferDirectory/Views/ListView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0"
+                  offsetFromSymbolStart = "20">
+               </Location>
+               <Location
+                  uuid = "AFCC1E78-A78B-44A1-B4DB-807FDF6B2F49 - 5849e6f6c3ba72d4"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "GafferDirectory.ListView.init(dataManager: SwiftUI.EnvironmentObject&lt;GafferDirectory.DataManager&gt;) -&gt; GafferDirectory.ListView"
+                  moduleName = "GafferDirectory"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/dylonangol/Desktop/Iphone%20app%20projects/GafferDirectory/GafferDirectory/Views/ListView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "11"
+                  endingLineNumber = "11"
+                  offsetFromSymbolStart = "256">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "3B2C64EB-4D54-4CA3-A4A9-896A031E2092"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "GafferDirectory/Views/ListView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1"
+            endingLineNumber = "1"
+            landmarkName = "unknown"
+            landmarkType = "0">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>

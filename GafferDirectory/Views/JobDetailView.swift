@@ -27,9 +27,9 @@ struct JobDetailView: View {
                     .font(.body)
                     .padding(.bottom, 5)
                 if let coordinates = jobPosting.coordinates {
-//                    Text("Location: \(coordinates.latitude), \(coordinates.longitude)")
-//                        .font(.subheadline)
-//                        .padding(.bottom, 5)
+                    Text("Location: \(coordinates.latitude), \(coordinates.longitude)")
+                        .font(.subheadline)
+                        .padding(.bottom, 5)
                     
                     if let address = address {
 //                        Text("Address: \(address)")

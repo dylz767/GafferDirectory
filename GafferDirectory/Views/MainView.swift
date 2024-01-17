@@ -1,18 +1,16 @@
-//
-//  MainView.swift
-//  GafferDirectory
-//
-//  Created by Dylon Angol on 17/01/2024.
-//
-
 import SwiftUI
+import Foundation
 
 struct MainView: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
-}
+    @State private var isSignedIn = false
+    @StateObject var dataManager = DataManager()
 
-#Preview {
-    MainView()
+    var body: some View {
+        if isSignedIn {
+            ListView() // Make sure ListView is correctly defined
+                .environmentObject(dataManager)
+        } else {
+            SignInView(isSignedIn: $isSignedIn)
+        }
+    }
 }

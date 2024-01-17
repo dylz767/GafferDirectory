@@ -8,8 +8,9 @@ struct JobBoardView: View {
     @State private var isProfileActive = false
     @State private var isListViewActive = false
     @State private var isJobBoardViewActive = false
-    @State private var isSignInSuccess = true
-    
+    @State private var isSignInViewActive = false
+    @State private var isSignedIn = true
+
 
     var body: some View {
         NavigationView {
@@ -32,43 +33,69 @@ struct JobBoardView: View {
                     .buttonStyle(PlainButtonStyle())
                 }
                 .navigationBarTitle("Job Board", displayMode: .inline)
-                .navigationBarItems(leading: EmptyView())
-                .navigationBarBackButtonHidden(true)
-
-                Spacer()
-
-                CustomNavigationBar(
-                    isProfileActive: $isProfileActive,
-                    isListViewActive: $isListViewActive,
-                    isJobBoardActive: $isJobBoardViewActive,
-                    listAction: {
-                        isListViewActive = true
-                    },
-                    jobBoardAction: {
-                        isJobBoardViewActive = true
-                    },
-                    profileAction: {
-                        isProfileActive = true
-                    }
+                .navigationBarItems(leading: NavigationLink(destination: JobPostingView()) {
+                    Text("Post a Job")
+                }
                 )
+//                .navigationBarBackButtonHidden(true)
+                .navigationBarBackButtonHidden(true)
+                
+                Spacer()
+                
+                CustomNavigationBar(
+                                isProfileActive: $isProfileActive,
+                                isListViewActive: $isListViewActive,
+                                isJobBoardActive: $isJobBoardViewActive,
+                                isSignInViewActive: $isSignInViewActive,
+                                isSignedIn: $isSignedIn, // Pass this binding
+                                listAction: {
+                                    // Handle User List action
+                                    isListViewActive = true
+                                },
+                                jobBoardAction: {
+                                    // Handle Jobs Board action
+                                    isJobBoardViewActive = true
+                                },
+                                profileAction: {
+                                    // Handle Profile View action
+                                    isProfileActive = true
+                                },
+                                signInAction: {
+                                    // Handle Sign In action
+                                    isSignInViewActive = true
+                                }
+                            )
                 .padding(.bottom, 8)
-            }
+                }
+
+            
             .fullScreenCover(item: $selectedJob) { job in
                 JobDetailView(jobPosting: job)
             }
-            .navigationBarBackButtonHidden(true)
             .background(
-                NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
-                    EmptyView()
-                }
-                .hidden()
-            )
-            .background(
-                NavigationLink(destination: ListView(), isActive: $isListViewActive) {
-                    EmptyView()
-                }
-                .hidden()
-            )
+                        NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+                    .background(
+                        NavigationLink(destination: ListView(), isActive: $isListViewActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+                    .background(
+                        NavigationLink(destination: JobBoardView(), isActive: $isJobBoardViewActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+                    .background(
+                        NavigationLink(destination: SignInView(isSignedIn: $isSignedIn), isActive: $isSignInViewActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
         }
         .navigationBarBackButtonHidden(true)
         .environmentObject(dataManager)

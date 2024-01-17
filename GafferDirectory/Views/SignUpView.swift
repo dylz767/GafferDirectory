@@ -34,7 +34,7 @@ struct SignUpView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
 
-                NavigationLink(destination: SignInView()) {
+                NavigationLink(destination: MainView()) {
                     Text("Already registered? Login")
                         .foregroundColor(.blue)
                         .padding(.bottom, 20)

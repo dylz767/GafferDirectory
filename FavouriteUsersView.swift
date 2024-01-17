@@ -1,18 +1,18 @@
+//import SwiftUI
 //
-//  FavouriteUsersView.swift
-//  GafferDirectory
+//struct MyView: View {
+//    @EnvironmentObject var dataManager: DataManager
 //
-//  Created by Dylon Angol on 17/01/2024.
+//    var body: some View {
+//        // Your view content
+//        .onAppear {
+//            dataManager.fetchCurrentUserFavorites { favorites in
+//                dataManager.currentUserFavorites = favorites
+//            }
+//        }
+//    }
 //
-
-import SwiftUI
-
-struct FavouriteUsersView: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
-}
-
-#Preview {
-    FavouriteUsersView()
-}
+//    func isUserFavorite(userId: String) -> Bool {
+//        dataManager.currentUserFavorites.contains(userId)
+//    }
+//}

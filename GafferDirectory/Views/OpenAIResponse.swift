@@ -1,18 +1,23 @@
-//
-//  OpenAiResponse.swift
-//  GafferDirectory
-//
-//  Created by Dylon Angol on 13/01/2024.
-//
-
-import SwiftUI
-
-struct OpenAiResponse: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+import Foundation
+struct OpenAIResponse: Decodable {
+    struct Choice: Decodable {
+        let message: OpenAIMessage
     }
+
+    struct OpenAIMessage: Decodable {
+        let content: String
+    }
+
+    let id: String
+    let object: String
+    let created: Int
+    let model: String
+    let usage: OpenAIUsage
+    let choices: [Choice]
 }
 
-#Preview {
-    OpenAiResponse()
+struct OpenAIUsage: Decodable {
+    let prompt_tokens: Int
+    let completion_tokens: Int
+    let total_tokens: Int
 }

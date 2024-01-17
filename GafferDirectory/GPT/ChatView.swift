@@ -1,57 +1,51 @@
-//
-//  ContentView.swift
-//  GafferDirectory
-//
-//  Created by Dylon Angol on 14/01/2024.
-//
-
 import SwiftUI
 import Alamofire
 
 struct ChatView: View {
-
     @ObservedObject var viewModel = ViewModel()
-    
-    let openAIService = OpenAIService()
     
     var body: some View {
         VStack {
             ScrollView {
                 LazyVStack {
-                    ForEach(viewModel.messages.filter({$0.role != .system}), id: \.id) { message in
-                                    messageView(message: message)
+                    ForEach(viewModel.messages, id: \.id) { message in
+                        messageView(message: message)
                     }
                 }
             }
             HStack {
-                TextField("enter a message", text: $viewModel.currentInput)
+                TextField("Enter a message", text: $viewModel.currentInput)
                     .padding()
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(12)
-                Button{
+                Button(action: {
                     viewModel.sendMessage()
-                }
-            label: {
-                Text("Send")
-                    
-                }
+                }) {
+                    Text("Send")
                         .foregroundColor(.white)
                         .padding()
-                        .background(Color.black)
+                        .background(Color.blue)
                         .cornerRadius(12)
+                }
             }
+            .padding()
         }
         .padding(.bottom, 8)
     }
+    
     func messageView(message: Message) -> some View {
         HStack{
-            if message.role == .user { Spacer()}
+            if message.role == .user { Spacer() }
             Text(message.content)
-            if message.role == .assistant { Spacer()}
+                .padding()
+                .foregroundColor(message.role == .user ? .black : .white)
+                .background(message.role == .user ? Color.gray.opacity(0.2) : Color.blue)
+                .cornerRadius(12)
+            if message.role == .assistant { Spacer() }
         }
-        
     }
 }
+
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ChatView()

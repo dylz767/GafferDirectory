@@ -12,6 +12,7 @@ struct ProfileView: View {
     @State private var isSignInViewActive = false
     @State private var isJobPostingViewActive = false
     @State private var isSignInSuccess = true
+    @State private var isSignedIn = true
 
     var body: some View {
         NavigationView {
@@ -33,103 +34,69 @@ struct ProfileView: View {
                     }
                     .navigationBarBackButtonHidden(true)
                 }
-                NavigationLink (destination: JobPostingView(), isActive: $isJobPostingViewActive,
-                 label: {
-                               Text("Post a Job")
-                                   .padding()
-                                   .background(Color.blue)
-                                   .foregroundColor(.white)
-                                   .cornerRadius(10)
-                           }
-                                )
-                           .padding(.bottom, 16)
+//                NavigationLink (destination: FavouriteCrew(), isActive: $isFavCrewActive,
+//                 label: {
+//                               Text("My Crew")
+//                                   .padding()
+//                                   .background(Color.blue)
+//                                   .foregroundColor(.white)
+//                                   .cornerRadius(10)
+//                           }
+//                                )
+//                           .padding(.bottom, 16)
 
                 Spacer()
 
                 CustomNavigationBar(
-                    isProfileActive: $isProfileActive,
-                    isListViewActive: $isListViewActive,
-                    isJobBoardActive: $isJobBoardViewActive,
-                    listAction: {
-                        // Handle User List action
-                        isListViewActive = true
-                    },
-                    jobBoardAction: {
-                        // Handle Jobs Board action
-                        isJobBoardViewActive = true
-                    },
-                    profileAction: {
-                        // Handle Profile View action
-                        isProfileActive = true
-                    }
-                )
+                                isProfileActive: $isProfileActive,
+                                isListViewActive: $isListViewActive,
+                                isJobBoardActive: $isJobBoardViewActive,
+                                isSignInViewActive: $isSignInViewActive,
+                                isSignedIn: $isSignedIn, // Pass this binding
+                                listAction: {
+                                    // Handle User List action
+                                    isListViewActive = true
+                                },
+                                jobBoardAction: {
+                                    // Handle Jobs Board action
+                                    isJobBoardViewActive = true
+                                },
+                                profileAction: {
+                                    // Handle Profile View action
+                                    isProfileActive = true
+                                },
+                                signInAction: {
+                                    // Handle Sign In action
+                                    isSignInViewActive = true
+                                }
+                            )
                 .padding(.bottom, 8)
             }
             .navigationBarTitle("Profile View", displayMode: .inline)
             .navigationBarBackButtonHidden(true)
-            .navigationBarItems(trailing: Button(action: {
-                do {
-                    try Auth.auth().signOut()
-                    presentationMode.wrappedValue.dismiss()
-
-                    // Navigate to SignInView
-                    isSignInViewActive = true  // Assuming isSignInViewActive is a @State variable
-
-                } catch {
-                    print("Error signing out: \(error.localizedDescription)")
-                }
-            }) {
-                Text("Logout")
-            })
-            .background(
-                NavigationLink(destination: SignInView(), isActive: $isSignInViewActive) {
-                    SignInView()
-
-                }
-            )
+          
             .onAppear {
                 fetchUserData()
                 fetchUserAccounts()
             }
-//            .background(
-//                NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
-//                    if isSignInViewActive == false
-//                    {
-//                        EmptyView()
-//                    }
-//                    else
-//                    if isSignInViewActive == true{
-//                        SignInView()
-//                    }
-//                }
-//                .hidden()
-//            )
-            .background(
-                NavigationLink(destination: ListView(), isActive: $isListViewActive) {
-//                    if isSignInViewActive == false
-//                    {
-                        EmptyView()
-//                    }
-//                    else
-//                    if isSignInViewActive == true{
-//                        SignInView()
-//                    }
-                }
-                .hidden()
-            )
-            .background(
-                NavigationLink(destination: JobBoardView(), isActive: $isJobBoardViewActive) {
-//                    if isSignInViewActive == false
-//                    {
-//                        EmptyView()
-//                    }
-//                    else
-//                    if isSignInViewActive == true{
-                        SignInView()
-//                    }
-                }
-                .hidden()
-            )
+                  .background(
+                      NavigationLink(destination: ListView(), isActive: $isListViewActive) {
+                          EmptyView()
+                      }
+                      .hidden()
+                  )
+                  .background(
+                      NavigationLink(destination: JobBoardView(), isActive: $isJobBoardViewActive) {
+                          EmptyView()
+                      }
+                      .hidden()
+                  )
+                  .background(
+                      NavigationLink(destination: SignInView(isSignedIn: $isSignedIn), isActive: $isSignInViewActive) {
+                          EmptyView()
+                      }
+                      .hidden()
+                  )
         }
         .navigationBarBackButtonHidden(true)
     }
@@ -155,6 +122,9 @@ struct ProfileView: View {
         dataManager.fetchUsersByUserId(userId: userID) { accounts in
             userAccounts = accounts
         }
+    }
+    private func signOut() {
+        
     }
 }
 

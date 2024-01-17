@@ -135,54 +135,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "AFCC1E78-A78B-44A1-B4DB-807FDF6B2F49"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "GafferDirectory/Views/ListView.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "11"
-            endingLineNumber = "11"
-            landmarkName = "ListView"
-            landmarkType = "14">
-            <Locations>
-               <Location
-                  uuid = "AFCC1E78-A78B-44A1-B4DB-807FDF6B2F49 - dad37458a66827f4"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "property wrapper backing initializer of GafferDirectory.ListView.isSignInViewActive : Swift.Bool"
-                  moduleName = "GafferDirectory"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/dylonangol/Desktop/Iphone%20app%20projects/GafferDirectory/GafferDirectory/Views/ListView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "0"
-                  endingLineNumber = "0"
-                  offsetFromSymbolStart = "20">
-               </Location>
-               <Location
-                  uuid = "AFCC1E78-A78B-44A1-B4DB-807FDF6B2F49 - 5849e6f6c3ba72d4"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "GafferDirectory.ListView.init(dataManager: SwiftUI.EnvironmentObject&lt;GafferDirectory.DataManager&gt;) -&gt; GafferDirectory.ListView"
-                  moduleName = "GafferDirectory"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/dylonangol/Desktop/Iphone%20app%20projects/GafferDirectory/GafferDirectory/Views/ListView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "11"
-                  endingLineNumber = "11"
-                  offsetFromSymbolStart = "256">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "3B2C64EB-4D54-4CA3-A4A9-896A031E2092"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"

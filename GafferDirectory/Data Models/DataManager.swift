@@ -3,26 +3,122 @@ import CoreLocation
 import Firebase
 
 extension DataManager {
-    private func extractProfessions(from response: String) -> [String] {
-        let knownProfessions = ["Engineer", "Designer", "Developer", "Artist", "Teacher"] // Example professions
-        var matchedProfessions: [String] = []
+    func addFavorite(for userId: String, favoriteId: String) {
+        let db = Firestore.firestore()
+        let userRef = db.collection("Users").document(userId)
 
-        for profession in knownProfessions {
-            if response.localizedCaseInsensitiveContains(profession) {
-                matchedProfessions.append(profession)
+        userRef.getDocument { (document, error) in
+            if let document = document, document.exists {
+                var favorites = document.get("favorites") as? [String] ?? []
+                if !favorites.contains(favoriteId) {
+                    favorites.append(favoriteId)
+                    userRef.updateData(["favorites": favorites]) { error in
+                        if let error = error {
+                            print("Error updating favorites: \(error.localizedDescription)")
+                        } else {
+                            print("Favorite successfully added.")
+                        }
+                    }
+                }
+            } else {
+                print("Document does not exist or error: \(error?.localizedDescription ?? "")")
+            }
+        }
+    }
+
+    func removeFavorite(for userId: String, favoriteId: String) {
+        let db = Firestore.firestore()
+        let userRef = db.collection("Users").document(userId)
+
+        userRef.getDocument { (document, error) in
+            if let document = document, document.exists {
+                var favorites = document.get("favorites") as? [String] ?? []
+                if let index = favorites.firstIndex(of: favoriteId) {
+                    favorites.remove(at: index)
+                    userRef.updateData(["favorites": favorites]) { error in
+                        if let error = error {
+                            print("Error updating favorites: \(error.localizedDescription)")
+                        } else {
+                            print("Favorite successfully removed.")
+                        }
+                    }
+                }
+            } else {
+                print("Document does not exist or error: \(error?.localizedDescription ?? "")")
+            }
+        }
+    }
+}
+extension DataManager {
+    func fetchCurrentUserFavorites(completion: @escaping (Set<String>) -> Void) {
+            guard let currentUserId = Auth.auth().currentUser?.uid else {
+                print("Error: Current user is not logged in.")
+                completion([])
+                return
+            }
+
+            let db = Firestore.firestore()
+            let userRef = db.collection("Users").document(currentUserId)
+
+            userRef.getDocument { (document, error) in
+                if let document = document, document.exists {
+                    let favorites = document.get("favorites") as? [String] ?? []
+                    completion(Set(favorites))
+                } else {
+                    print("Document does not exist or error: \(error?.localizedDescription ?? "")")
+                    completion([])
+                }
             }
         }
 
-        return matchedProfessions
-    }
+    func toggleFavorite(_ userId: String) {
+           guard let currentUserId = Auth.auth().currentUser?.uid else {
+               print("Error: Current user is not logged in.")
+               return
+           }
+
+           let db = Firestore.firestore()
+           let userRef = db.collection("Users").document(currentUserId)
+
+           userRef.getDocument { (document, error) in
+               if let document = document, document.exists {
+                   var favorites = document.get("favorites") as? [String] ?? []
+                   
+                   if let index = favorites.firstIndex(of: userId) {
+                       // User is already a favorite, remove them
+                       favorites.remove(at: index)
+                   } else {
+                       // User is not a favorite, add them
+                       favorites.append(userId)
+                   }
+                   
+                   // Update the database
+                   userRef.updateData(["favorites": favorites]) { error in
+                       if let error = error {
+                           print("Error updating favorites: \(error.localizedDescription)")
+                       } else {
+                           print("Favorites successfully updated.")
+                       }
+                   }
+               } else {
+                   print("Document does not exist or error: \(error?.localizedDescription ?? "")")
+               }
+           }
+       }
 }
+
 class DataManager: ObservableObject {
     @Published var accounts: [Account] = []
     @Published var users: [User] = []
     @Published var jobPostings: [JobPosting] = []
     @Published var geocodingResult: Result<CLLocationCoordinate2D, Error>?
     @Published var geocodedJobPostings: [GeocodedJobPosting] = []
-
+    @Published var currentUserFavorites: Set<String> = []
+    
+    var currentUserId: String {
+            return Auth.auth().currentUser?.uid ?? ""
+        }
+    
     private let geocoder = CLGeocoder()
     private var db = Firestore.firestore()
 
@@ -31,22 +127,15 @@ class DataManager: ObservableObject {
     }
     
     
-    func addUser(userProfession: String, usersName: String, emailAdd: String, ownKit: Bool) {
-        let id = UUID().uuidString
-        let ref = db.collection("Users").document(id)
-        ref.setData([
-            "name": usersName,
-            "profession": userProfession,
-            "id": id,
-            "email": emailAdd,
-            "userId": Auth.auth().currentUser?.uid ?? "",
-            "ownKit": ownKit  // Add ownKit to the user data
-        ]) { error in
-            if let error = error {
-                print("Error adding user:", error.localizedDescription)
+    func addUser(userProfession: String, usersName: String, emailAdd: String) {
+            let id = UUID().uuidString
+            let ref = db.collection("Users").document(id)
+            ref.setData(["name": usersName, "profession": userProfession, "id": id, "email": emailAdd, "userId": Auth.auth().currentUser?.uid ?? ""]) { error in
+                if let error = error {
+                    print("Error adding user:", error.localizedDescription)
+                }
             }
         }
-    }
 
     func fetchUsers() {
             accounts.removeAll()
@@ -66,16 +155,15 @@ class DataManager: ObservableObject {
                         let name = data["name"] as? String ?? ""
                         let email = data["email"] as? String ?? ""
                         let userId = data["userId"] as? String ?? ""
-                        let ownKit = data["ownKit"] as? Bool ?? false
-                        
 
-                        let account = Account(id: id, userId: userId, name: name, profession: profession, email: email, ownKit: ownKit)
+                        let account = Account(id: id, userId: userId, name: name, profession: profession, email: email)
                         self.accounts.append(account)
                     }
                     print("Fetched \(self.accounts.count) users")
                 }
             }
         }
+
     func fetchUsersByUserId(userId: String, completion: @escaping ([Account]) -> Void) {
         accounts.removeAll()
         let db = Firestore.firestore()
@@ -95,9 +183,8 @@ class DataManager: ObservableObject {
                             let profession = data["profession"] as? String ?? ""
                             let name = data["name"] as? String ?? ""
                             let email = data["email"] as? String ?? ""
-                            let ownKit = data["ownKit"] as? Bool ?? false
 
-                            let account = Account(id: id, userId: userId, name: name, profession: profession, email: email, ownKit: ownKit)
+                            let account = Account(id: id, userId: userId, name: name, profession: profession, email: email)
                             userAccounts.append(account)
                         }
                         print("Fetched \(userAccounts.count) users by userID")
@@ -121,8 +208,7 @@ class DataManager: ObservableObject {
                 let name = data?["name"] as? String ?? ""
                 let profession = data?["profession"] as? String ?? ""
                 let email = data?["email"] as? String ?? ""
-                let ownKit = data?["ownKit"] as? Bool ?? false
-                let accounts = Account(id: id, userId: userId, name: name, profession: profession, email: email, ownKit: ownKit)
+                let accounts = Account(id: id, userId: userId, name: name, profession: profession, email: email)
                 completion(accounts)
             } else {
                 completion(nil)
@@ -439,37 +525,5 @@ class DataManager: ObservableObject {
             completion()
         }
     }
+    
 }
-//    func fetchJobPosts() {
-//        accounts.removeAll()
-//        let db = Firestore.firestore()
-//        let ref = db.collection("Jobs")
-//        print("Number of jobs found: \(jobPostings.count)")
-//        ref.getDocuments { snapshot, error in
-//            guard error == nil else {
-//                print(error!.localizedDescription)
-//                return
-//            }
-//            if let snapshot = snapshot {
-//                for document in snapshot.documents {
-//                    let data = document.data()
-//
-//                    let id = data["id"] as? String ?? ""
-//                    let userID = data["userID"] as? String ?? ""
-//                    let companyName = data["companyName"] as? String ?? ""
-//                    let jobDescription = data["jobDescription"] as? String ?? ""
-//                    let postcode = data["postcode"] as? String ?? ""
-//                    // Coordinates should be a dictionary, not a string
-//                    let coordinates = data["coordinates"] as? [String: Any] ?? [:]
-//                    // Latitude and longitude should be Double, not String
-//                    let latitude = coordinates["latitude"] as? Double ?? 0.0
-//                    let longitude = coordinates["longitude"] as? Double ?? 0.0
-//                    let location = CLLocation(latitude: latitude, longitude: longitude)
-//
-//                    let jobPosting = JobPosting(id: id, userID: userID, companyName: companyName, jobDescription: jobDescription, postcode: postcode)
-//                    self.jobPostings.append(jobPosting)
-//
-//                }
-//            }
-//        }
-//    }

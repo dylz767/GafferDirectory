@@ -13,4 +13,5 @@ struct Account: Identifiable, Equatable {
         var name: String
         var profession: String
         var email: String
+//        var favoriteUserIds: [String] = []
 }

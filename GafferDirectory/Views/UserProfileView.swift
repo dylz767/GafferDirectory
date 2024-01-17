@@ -6,6 +6,7 @@ struct UserProfileView: View {
     @State private var isProfileActive = false
     @State private var isJobBoardViewActive = false
     @State private var isSignInViewActive = false
+    @State private var isSignedIn = true
 
     var body: some View {
         NavigationView {
@@ -21,21 +22,27 @@ struct UserProfileView: View {
                 Spacer()
 //start of custom nav bar code
                 CustomNavigationBar(
-                    isProfileActive: $isProfileActive,
-                    isListViewActive: $isListViewActive,
-                    isJobBoardActive: $isJobBoardViewActive,
-                    listAction: {
-                        // Handle User List action
-                        isListViewActive = true
-                    },
-                    jobBoardAction: {
-                        // Handle Jobs Board action
-                        isJobBoardViewActive = true
-                    },
-                    profileAction: {
-                        // Handle Profile View action
-                        isProfileActive = true
-                    }
+                                isProfileActive: $isProfileActive,
+                                isListViewActive: $isListViewActive,
+                                isJobBoardActive: $isJobBoardViewActive,
+                                isSignInViewActive: $isSignInViewActive,
+                                isSignedIn: $isSignedIn, // Pass this binding
+                                listAction: {
+                                    // Handle User List action
+                                    isListViewActive = true
+                                },
+                                jobBoardAction: {
+                                    // Handle Jobs Board action
+                                    isJobBoardViewActive = true
+                                },
+                                profileAction: {
+                                    // Handle Profile View action
+                                    isProfileActive = true
+                                },
+                                signInAction: {
+                                    // Handle Sign In action
+                                    isSignInViewActive = true
+                                }
                 )
                 .padding(.bottom, 8)
                 .navigationBarTitle("\(user.name)'s Profile", displayMode: .inline)
@@ -44,44 +51,29 @@ struct UserProfileView: View {
             // Ensure JobBoardView is within NavigationView
             .navigationBarBackButtonHidden(true)
             .background(
-                NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
-                    if isSignInViewActive == false
-                    {
-                        EmptyView()
-                    }
-                    else
-                    if isSignInViewActive == true{
-                        SignInView()
-                    }
-                }
-                .hidden()
-            )
-            .background(
-                NavigationLink(destination: ListView(), isActive: $isListViewActive) {
-                    if isSignInViewActive == false
-                    {
-                        EmptyView()
-                    }
-                    else
-                    if isSignInViewActive == true{
-                        SignInView()
-                    }
-                }
-                .hidden()
-            )
-            .background(
-                NavigationLink(destination: JobBoardView(), isActive: $isJobBoardViewActive) {
-                    if isSignInViewActive == false
-                    {
-                        EmptyView()
-                    }
-                    else
-                    if isSignInViewActive == true{
-                        SignInView()
-                    }
-                }
-                .hidden()
-            )
+                        NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+                    .background(
+                        NavigationLink(destination: ListView(), isActive: $isListViewActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+                    .background(
+                        NavigationLink(destination: JobBoardView(), isActive: $isJobBoardViewActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+                    .background(
+                        NavigationLink(destination: SignInView(isSignedIn: $isSignedIn), isActive: $isSignInViewActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
             //end of custom nav bar code
             }
             .navigationBarBackButtonHidden(true)

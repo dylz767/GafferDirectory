@@ -4,15 +4,11 @@
 //
 //  Created by Dylon Angol on 14/01/2024.
 //
-
-import SwiftUI
-
-struct Constants: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
+import Foundation
+import Alamofire
+enum Constants {
+    static let openAIApiKey = "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"
+    static let assistantId = "asst_RDhUOhslRVkgLUw13jNCvuG9"
 }
 
-#Preview {
-    Constants()
-}
+

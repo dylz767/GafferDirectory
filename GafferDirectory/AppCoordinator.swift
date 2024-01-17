@@ -1,18 +1,36 @@
+////
+////  AppCoordinator.swift
+////  GafferDirectory
+////
+////  Created by Dylon Angol on 08/01/2024.
+////
 //
-//  AppCoordinator.swift
-//  GafferDirectory
+//import SwiftUI
+//import Firebase
 //
-//  Created by Dylon Angol on 16/01/2024.
+//class AppCoordinator: ObservableObject {
+//    @Published var isUserAuthenticated = false
+//    
 //
-
-import SwiftUI
-
-struct AppCoordinator: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
-}
-
-#Preview {
-    AppCoordinator()
-}
+//    func checkUserAuthentication() {
+//        if Auth.auth().currentUser != nil {
+//            // User is signed in
+//            isUserAuthenticated = true
+//        } else {
+//            // User is not signed in
+//            isUserAuthenticated = false
+//        }
+//    }
+//
+//    func navigateToSignInView() {
+//        // Implement your navigation logic to go to SignInView
+//        // For example:
+//        print("Navigate to SignInView")
+//        // You can use a navigation stack or a coordinator to handle navigation in your app
+//        NavigationView {
+//            SignInView()
+//                .navigationBarBackButtonHidden(true)
+//        }
+//        
+//    }
+//}

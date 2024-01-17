@@ -2,6 +2,20 @@ import Foundation
 import CoreLocation
 import Firebase
 
+extension DataManager {
+    private func extractProfessions(from response: String) -> [String] {
+        let knownProfessions = ["Engineer", "Designer", "Developer", "Artist", "Teacher"] // Example professions
+        var matchedProfessions: [String] = []
+
+        for profession in knownProfessions {
+            if response.localizedCaseInsensitiveContains(profession) {
+                matchedProfessions.append(profession)
+            }
+        }
+
+        return matchedProfessions
+    }
+}
 class DataManager: ObservableObject {
     @Published var accounts: [Account] = []
     @Published var users: [User] = []
@@ -17,15 +31,22 @@ class DataManager: ObservableObject {
     }
     
     
-    func addUser(userProfession: String, usersName: String, emailAdd: String) {
-            let id = UUID().uuidString
-            let ref = db.collection("Users").document(id)
-            ref.setData(["name": usersName, "profession": userProfession, "id": id, "email": emailAdd, "userId": Auth.auth().currentUser?.uid ?? ""]) { error in
-                if let error = error {
-                    print("Error adding user:", error.localizedDescription)
-                }
+    func addUser(userProfession: String, usersName: String, emailAdd: String, ownKit: Bool) {
+        let id = UUID().uuidString
+        let ref = db.collection("Users").document(id)
+        ref.setData([
+            "name": usersName,
+            "profession": userProfession,
+            "id": id,
+            "email": emailAdd,
+            "userId": Auth.auth().currentUser?.uid ?? "",
+            "ownKit": ownKit  // Add ownKit to the user data
+        ]) { error in
+            if let error = error {
+                print("Error adding user:", error.localizedDescription)
             }
         }
+    }
 
     func fetchUsers() {
             accounts.removeAll()
@@ -45,50 +66,16 @@ class DataManager: ObservableObject {
                         let name = data["name"] as? String ?? ""
                         let email = data["email"] as? String ?? ""
                         let userId = data["userId"] as? String ?? ""
+                        let ownKit = data["ownKit"] as? Bool ?? false
+                        
 
-                        let account = Account(id: id, userId: userId, name: name, profession: profession, email: email)
+                        let account = Account(id: id, userId: userId, name: name, profession: profession, email: email, ownKit: ownKit)
                         self.accounts.append(account)
                     }
                     print("Fetched \(self.accounts.count) users")
                 }
             }
         }
-    
-//    func fetchJobPosts() {
-//        accounts.removeAll()
-//        let db = Firestore.firestore()
-//        let ref = db.collection("Jobs")
-//        print("Number of jobs found: \(jobPostings.count)")
-//        ref.getDocuments { snapshot, error in
-//            guard error == nil else {
-//                print(error!.localizedDescription)
-//                return
-//            }
-//            if let snapshot = snapshot {
-//                for document in snapshot.documents {
-//                    let data = document.data()
-//
-//                    let id = data["id"] as? String ?? ""
-//                    let userID = data["userID"] as? String ?? ""
-//                    let companyName = data["companyName"] as? String ?? ""
-//                    let jobDescription = data["jobDescription"] as? String ?? ""
-//                    let postcode = data["postcode"] as? String ?? ""
-//                    // Coordinates should be a dictionary, not a string
-//                    let coordinates = data["coordinates"] as? [String: Any] ?? [:]
-//                    // Latitude and longitude should be Double, not String
-//                    let latitude = coordinates["latitude"] as? Double ?? 0.0
-//                    let longitude = coordinates["longitude"] as? Double ?? 0.0
-//                    let location = CLLocation(latitude: latitude, longitude: longitude)
-//
-//                    let jobPosting = JobPosting(id: id, userID: userID, companyName: companyName, jobDescription: jobDescription, postcode: postcode)
-//                    self.jobPostings.append(jobPosting)
-//
-//                }
-//            }
-//        }
-//    }
-
-
     func fetchUsersByUserId(userId: String, completion: @escaping ([Account]) -> Void) {
         accounts.removeAll()
         let db = Firestore.firestore()
@@ -108,8 +95,9 @@ class DataManager: ObservableObject {
                             let profession = data["profession"] as? String ?? ""
                             let name = data["name"] as? String ?? ""
                             let email = data["email"] as? String ?? ""
+                            let ownKit = data["ownKit"] as? Bool ?? false
 
-                            let account = Account(id: id, userId: userId, name: name, profession: profession, email: email)
+                            let account = Account(id: id, userId: userId, name: name, profession: profession, email: email, ownKit: ownKit)
                             userAccounts.append(account)
                         }
                         print("Fetched \(userAccounts.count) users by userID")
@@ -133,7 +121,8 @@ class DataManager: ObservableObject {
                 let name = data?["name"] as? String ?? ""
                 let profession = data?["profession"] as? String ?? ""
                 let email = data?["email"] as? String ?? ""
-                let accounts = Account(id: id, userId: userId, name: name, profession: profession, email: email)
+                let ownKit = data?["ownKit"] as? Bool ?? false
+                let accounts = Account(id: id, userId: userId, name: name, profession: profession, email: email, ownKit: ownKit)
                 completion(accounts)
             } else {
                 completion(nil)
@@ -451,3 +440,36 @@ class DataManager: ObservableObject {
         }
     }
 }
+//    func fetchJobPosts() {
+//        accounts.removeAll()
+//        let db = Firestore.firestore()
+//        let ref = db.collection("Jobs")
+//        print("Number of jobs found: \(jobPostings.count)")
+//        ref.getDocuments { snapshot, error in
+//            guard error == nil else {
+//                print(error!.localizedDescription)
+//                return
+//            }
+//            if let snapshot = snapshot {
+//                for document in snapshot.documents {
+//                    let data = document.data()
+//
+//                    let id = data["id"] as? String ?? ""
+//                    let userID = data["userID"] as? String ?? ""
+//                    let companyName = data["companyName"] as? String ?? ""
+//                    let jobDescription = data["jobDescription"] as? String ?? ""
+//                    let postcode = data["postcode"] as? String ?? ""
+//                    // Coordinates should be a dictionary, not a string
+//                    let coordinates = data["coordinates"] as? [String: Any] ?? [:]
+//                    // Latitude and longitude should be Double, not String
+//                    let latitude = coordinates["latitude"] as? Double ?? 0.0
+//                    let longitude = coordinates["longitude"] as? Double ?? 0.0
+//                    let location = CLLocation(latitude: latitude, longitude: longitude)
+//
+//                    let jobPosting = JobPosting(id: id, userID: userID, companyName: companyName, jobDescription: jobDescription, postcode: postcode)
+//                    self.jobPostings.append(jobPosting)
+//
+//                }
+//            }
+//        }
+//    }

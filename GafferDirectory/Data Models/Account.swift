@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct Account: Identifiable, Equatable {
-        var id: String
-        var userId: String  // Add user ID field
-        var name: String
-        var profession: String
-        var email: String
-//        var favoriteUserIds: [String] = []
+    var id: String
+    var userId: String
+    var name: String
+    var profession: String
+    var email: String
+    var favorites: [String]? // Optional, depending on your design choice
 }

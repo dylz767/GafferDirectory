@@ -3,48 +3,63 @@ import CoreLocation
 import Firebase
 
 extension DataManager {
-    func addFavorite(for userId: String, favoriteId: String) {
-        let db = Firestore.firestore()
-        let userRef = db.collection("Users").document(userId)
+    // MARK: Favorites Management
+    func fetchCurrentUserFavorites() {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("Error: Current user is not logged in.")
+            self.currentUserFavorites = Set<String>()
+            return
+        }
+
+        let userRef = db.collection("Users").document(currentUserId) // Using Firebase Auth UID as the document ID
 
         userRef.getDocument { (document, error) in
-            if let document = document, document.exists {
-                var favorites = document.get("favorites") as? [String] ?? []
-                if !favorites.contains(favoriteId) {
-                    favorites.append(favoriteId)
-                    userRef.updateData(["favorites": favorites]) { error in
-                        if let error = error {
-                            print("Error updating favorites: \(error.localizedDescription)")
-                        } else {
-                            print("Favorite successfully added.")
-                        }
-                    }
-                }
-            } else {
-                print("Document does not exist or error: \(error?.localizedDescription ?? "")")
+            guard let document = document, document.exists, error == nil else {
+                print("Error fetching favorites:", error?.localizedDescription ?? "Unknown error")
+                self.currentUserFavorites = Set<String>()
+                return
             }
+
+            let favorites = document.get("favorites") as? [String] ?? []
+            self.currentUserFavorites = Set(favorites)
         }
     }
+    
+//    func createUserDocument(userId: String, name: String, email: String) {
+//        let userRef = db.collection("Users").document(userId)
+//        userRef.getDocument { (document, error) in
+//            if let document = document, document.exists {
+//                print("Document already exists")
+//            } else {
+//                print("Creating new document for user")
+//                userRef.setData(["name" : name, "email": email, "favorites": []])
+//            }
+//        }
+//    }
+    func addFavorite(favoriteId: String) {
+            let userRef = db.collection("Users").document(currentUserId)  // currentUserId is the document ID
 
-    func removeFavorite(for userId: String, favoriteId: String) {
-        let db = Firestore.firestore()
-        let userRef = db.collection("Users").document(userId)
-
-        userRef.getDocument { (document, error) in
-            if let document = document, document.exists {
-                var favorites = document.get("favorites") as? [String] ?? []
-                if let index = favorites.firstIndex(of: favoriteId) {
-                    favorites.remove(at: index)
-                    userRef.updateData(["favorites": favorites]) { error in
-                        if let error = error {
-                            print("Error updating favorites: \(error.localizedDescription)")
-                        } else {
-                            print("Favorite successfully removed.")
-                        }
-                    }
+            userRef.updateData([
+                "favorites": FieldValue.arrayUnion([favoriteId])
+            ]) { error in
+                if let error = error {
+                    print("Error adding favorite: \(error.localizedDescription)")
+                } else {
+                    self.currentUserFavorites.insert(favoriteId)
                 }
+            }
+        }
+    
+    func removeFavorite(favoriteId: String) {
+        let userRef = db.collection("Users").document(currentUserId)  // currentUserId is the document ID
+
+        userRef.updateData([
+            "favorites": FieldValue.arrayRemove([favoriteId])
+        ]) { error in
+            if let error = error {
+                print("Error removing favorite: \(error.localizedDescription)")
             } else {
-                print("Document does not exist or error: \(error?.localizedDescription ?? "")")
+                self.currentUserFavorites.remove(favoriteId)
             }
         }
     }
@@ -128,14 +143,27 @@ class DataManager: ObservableObject {
     
     
     func addUser(userProfession: String, usersName: String, emailAdd: String) {
-            let id = UUID().uuidString
-            let ref = db.collection("Users").document(id)
-            ref.setData(["name": usersName, "profession": userProfession, "id": id, "email": emailAdd, "userId": Auth.auth().currentUser?.uid ?? ""]) { error in
+        if let userId = Auth.auth().currentUser?.uid {
+            let ref = db.collection("Users").document(userId)
+            
+            let userData: [String: Any] = [
+                "name": usersName,
+                "profession": userProfession,
+                "id": userId,
+                "email": emailAdd
+            ]
+            
+            ref.setData(userData) { (error) in
                 if let error = error {
                     print("Error adding user:", error.localizedDescription)
+                } else {
+                    print("User added successfully")
                 }
             }
+        } else {
+            print("User is not authenticated. Cannot add user.")
         }
+    }
 
     func fetchUsers() {
             accounts.removeAll()

@@ -14,6 +14,7 @@ struct GafferDirectoryApp: App {
     var body: some Scene {
         WindowGroup {
             MainView()
+                .environmentObject(dataManager)
         }
     }
 }

@@ -108,10 +108,10 @@ struct ListView: View {
 
     private func toggleFavorite(for id: String) {
         if favorites.contains(id) {
-            dataManager.removeFavorite(for: dataManager.currentUserId, favoriteId: id)
+            dataManager.removeFavorite(favoriteId: id)
             favorites.remove(id)
         } else {
-            dataManager.addFavorite(for: dataManager.currentUserId, favoriteId: id)
+            dataManager.addFavorite(favoriteId: id)
             favorites.insert(id)
         }
     }

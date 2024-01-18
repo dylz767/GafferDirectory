@@ -150,6 +150,7 @@ class DataManager: ObservableObject {
                 "name": usersName,
                 "profession": userProfession,
                 "id": userId,
+                "userId": userId,
                 "email": emailAdd
             ]
             

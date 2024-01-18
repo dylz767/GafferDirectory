@@ -3,20 +3,15 @@ import Firebase
 
 struct ProfileView: View {
     @EnvironmentObject var dataManager: DataManager
-    @State private var userAccounts: [Account] = []
     @State private var currentUser: Account?
-    @State private var userName: String = ""
-    @Environment(\.presentationMode) var presentationMode
+    @State private var favoriteAccounts: [Account] = []
     @State private var isListViewActive = false
     @State private var isJobBoardViewActive = false
     @State private var isProfileActive = true
     @State private var isSignInViewActive = false
-    @State private var isJobPostingViewActive = false
-    @State private var isSignInSuccess = true
     @State private var isSignedIn = true
-    var favoriteAccounts: [Account] {
-        dataManager.accounts.filter { dataManager.currentUserFavorites.contains($0.id) }
-    }
+    @State private var selectedUser: Account?
+    @State private var isNavigatingToProfile = false
     
     var body: some View {
         NavigationView {
@@ -26,28 +21,40 @@ struct ProfileView: View {
                         .font(.headline)
                     Text("Profession: \(currentUser.profession)")
                         .font(.subheadline)
-                    // ... display other details of currentUser
                 } else {
                     Text("No profile data found.")
                         .foregroundColor(.gray)
                 }
-                //display favourites
+
                 if favoriteAccounts.isEmpty {
                     Text("No favorites found.")
                         .foregroundColor(.gray)
                 } else {
-                    List(favoriteAccounts, id: \.id) { account in
-                        VStack(alignment: .leading) {
-                            Text("Name: \(account.name)")
-                                .font(.headline)
-                            Text("Profession: \(account.profession)")
-                                .font(.subheadline)
+                    HStack {
+                        ZStack {
+                            VStack(alignment: .leading) {
+                                List(favoriteAccounts, id: \.id) { account in
+                                    VStack(alignment: .leading) {
+                                        Text("Name: \(account.name)")
+                                            .font(.headline)
+                                        Text("Profession: \(account.profession)")
+                                            .font(.subheadline)
+                                    }
+                                    .multilineTextAlignment(.leading)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle()) // Makes the entire VStack tappable
+                                    .onTapGesture {
+                                        selectedUser = account
+                                        isNavigatingToProfile = true
+                                    }
+                                }
+                    }
                         }
                     }
                 }
-                
+
                 Spacer()
-                
+
                 CustomNavigationBar(
                     isProfileActive: $isProfileActive,
                     isListViewActive: $isListViewActive,
@@ -55,19 +62,15 @@ struct ProfileView: View {
                     isSignInViewActive: $isSignInViewActive,
                     isSignedIn: $isSignedIn, // Pass this binding
                     listAction: {
-                        // Handle User List action
                         isListViewActive = true
                     },
                     jobBoardAction: {
-                        // Handle Jobs Board action
                         isJobBoardViewActive = true
                     },
                     profileAction: {
-                        // Handle Profile View action
                         isProfileActive = true
                     },
                     signInAction: {
-                        // Handle Sign In action
                         isSignInViewActive = true
                     }
                 )
@@ -75,10 +78,11 @@ struct ProfileView: View {
             }
             .navigationBarTitle("Profile View", displayMode: .inline)
             .navigationBarBackButtonHidden(true)
-            
             .onAppear {
-                fetchUserData()
-                fetchUserAccounts()
+                setupView()
+            }
+            .fullScreenCover(item: $selectedUser) { user in
+                UserProfileView(user: user)
             }
             .background(
                 NavigationLink(destination: ListView(), isActive: $isListViewActive) {
@@ -98,53 +102,34 @@ struct ProfileView: View {
                 }
                     .hidden()
             )
-            .onAppear {
-                fetchCurrentUserProfile()
-                fetchUserAccounts()
-                dataManager.fetchCurrentUserFavorites()
-            }
         }
         .navigationBarBackButtonHidden(true)
     }
     
-    private func fetchUserData() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            return
-        }
-        
-        dataManager.fetchUserData(userId: userID) { user in
-            if let user = user {
-                userName = user.name
-            }
+    private func setupView() {
+        fetchCurrentUserProfile()
+        fetchFavoriteAccounts()
+    }
+
+    private func fetchCurrentUserProfile() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+
+        dataManager.fetchUserData(userId: userID) { account in
+            self.currentUser = account
         }
     }
 
-        private func fetchCurrentUserProfile() {
-            guard let userID = Auth.auth().currentUser?.uid else {
-                return
-            }
+    private func fetchFavoriteAccounts() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
 
-            dataManager.fetchUserData(userId: userID) { account in
-                self.currentUser = account
-            }
-        }
-
-        private func fetchUserAccounts() {
-            guard let userID = Auth.auth().currentUser?.uid else {
-                return
-            }
-
-            dataManager.fetchUsersByUserId(userId: userID) { accounts in
-                self.userAccounts = accounts
-            }
-        }
-
-        // ... rest of the ProfileView code
-    }
-
-    struct ProfileView_Previews: PreviewProvider {
-        static var previews: some View {
-            ProfileView()
-                .environmentObject(DataManager())
+        dataManager.fetchCurrentUserFavorites { favoritesSet in
+            self.favoriteAccounts = dataManager.accounts.filter { favoritesSet.contains($0.id) }
         }
     }
+}
+
+struct ProfileView_Previews: PreviewProvider {
+    static var previews: some View {
+        ProfileView().environmentObject(DataManager())
+    }
+}

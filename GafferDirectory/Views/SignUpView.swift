@@ -1,5 +1,6 @@
 import SwiftUI
 import Firebase
+import CoreLocation
 
 struct SignUpView: View {
     @EnvironmentObject var dataManager: DataManager
@@ -7,8 +8,12 @@ struct SignUpView: View {
     @State private var newName = ""
     @State private var newEmail = ""
     @State private var password = ""
+    @State private var address = ""
     @State private var isSignUpSuccess = false
     @State private var navigateToListView = false
+    @State private var emailInvalid = false
+    
+    
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
@@ -35,6 +40,10 @@ struct SignUpView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
                 
+                TextField("Address", text: $address)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+                
                 Button("Already registered? Login") {
                     presentationMode.wrappedValue.dismiss() // Dismiss SignUpView to go back
                 }
@@ -49,11 +58,19 @@ struct SignUpView: View {
                 .background(Color.blue)
                 .cornerRadius(8)
                     
+                if emailInvalid {
+                    Text("That email is already in use")
+                }
+                else {
+                    
+                }
+               
                 if isSignUpSuccess {
                     Text("Sign up successful!")
                         .foregroundColor(.green)
                         .padding()
                 }
+                
 
                 Spacer()
             }
@@ -68,24 +85,44 @@ struct SignUpView: View {
                 }
                 .hidden()
             )
+            .navigationBarBackButtonHidden(true)
         }
+        .navigationBarBackButtonHidden(true)
     }
 
     private func signUp() {
-        Auth.auth().createUser(withEmail: newEmail, password: password) { authResult, error in
-            if let error = error {
-                print("Error creating user: \(error.localizedDescription)")
-            } else {
+        geocodeAddress(address) { geocodedCity in
+            Auth.auth().createUser(withEmail: newEmail, password: password) { authResult, error in
+                if let error = error as NSError? {
+                    // Handle different error codes here
+                    if error.code == AuthErrorCode.emailAlreadyInUse.rawValue {
+                        print("Email already exists")
+                        emailInvalid = true
+                    } else {
+                        print("Error creating user: \(error.localizedDescription)")
+                        
+                    }
+                    return
+                }
                 print("User created successfully!")
-                self.dataManager.addUser(userProfession: newProfession, usersName: newName, emailAdd: newEmail)
+                self.dataManager.addUser(userProfession: newProfession, usersName: newName, emailAdd: newEmail, location: geocodedCity)
                 self.isSignUpSuccess = true
-
-                // Automatically log in the user after successful sign-up
                 self.signInUser()
             }
         }
     }
-
+    private func signUpWithLocation(_ city: String) {
+        Auth.auth().createUser(withEmail: newEmail, password: password) { authResult, error in
+            if let error = error {
+                print("Error creating user: \(error.localizedDescription)")
+                return
+            }
+            print("User created successfully!")
+            self.dataManager.addUser(userProfession: newProfession, usersName: newName, emailAdd: newEmail, location: city)
+            self.isSignUpSuccess = true
+            self.signInUser()
+        }
+    }
     private func signInUser() {
         Auth.auth().signIn(withEmail: newEmail, password: password) { authResult, error in
             if let error = error {
@@ -104,6 +141,17 @@ struct SignUpView: View {
         newName = ""
         newEmail = ""
         password = ""
+    }
+}
+private func geocodeAddress(_ address: String, completion: @escaping (String) -> Void) {
+    CLGeocoder().geocodeAddressString(address) { placemarks, error in
+        guard let place = placemarks?.first, error == nil else {
+            print("Geocoding failed: \(error?.localizedDescription ?? "No error description")")
+            completion("") // Send empty string or handle error as needed
+            return
+        }
+        let geocodedCity = place.locality ?? ""
+        completion(geocodedCity)
     }
 }
 

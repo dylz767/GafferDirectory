@@ -12,6 +12,8 @@ struct JobPostingView: View {
     @State private var isSignInViewActive = false
     @State private var isSignedIn = true
     @State private var address: String = "" // New state for address
+    @State private var postedJob: JobPosting?
+    @State private var navigateToJobDetails = false
     
     var body: some View {
         NavigationView {
@@ -44,12 +46,14 @@ struct JobPostingView: View {
             .navigationBarBackButtonHidden(true)
             .background(
                 VStack {
-                    List {
-                        // Your list content here
-                    }
-                    .onAppear {
-                        // Your list onAppear logic here
-                    }
+                    NavigationLink(
+                                destination: JobDetailView(jobPosting: postedJob),
+                                isActive: $navigateToJobDetails
+                            ) {
+                                EmptyView()
+                            }
+                            .hidden()
+                    
                     .navigationTitle("Post a Job")
                     .navigationBarItems(leading: EmptyView())
                     .navigationBarBackButtonHidden(true)
@@ -119,22 +123,27 @@ struct JobPostingView: View {
         dataManager.geocodeAddress(address) { result in
             switch result {
             case .success(let (geocodedCoordinates, postcode)):
-                let jobPosting = JobPosting(
+                let newJobPosting = JobPosting(
                     id: UUID().uuidString,
                     userID: userID,
-                    companyName: companyName,
-                    jobDescription: jobDescription,
+                    companyName: self.companyName,
+                    jobDescription: self.jobDescription,
                     coordinates: geocodedCoordinates,
                     postcode: postcode
                 )
 
                 // Save the job posting to Firestore
-                print("Posting job:", jobPosting)
-                dataManager.postJob(jobPosting: jobPosting)
+                print("Posting job:", newJobPosting)
+                self.dataManager.postJob(jobPosting: newJobPosting)
 
                 // Clear the input fields after posting
-                companyName = ""
-                jobDescription = ""
+                self.companyName = ""
+                self.jobDescription = ""
+                self.address = ""
+
+                // Update the state for navigation
+                self.postedJob = newJobPosting
+                self.navigateToJobDetails = true
 
             case .failure(let error):
                 // Handle the geocoding error here

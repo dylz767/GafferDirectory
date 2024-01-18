@@ -3,7 +3,7 @@ import CoreLocation
 import MapKit
 
 struct JobDetailView: View {
-    let jobPosting: JobPosting
+    let jobPosting: JobPosting?
     @State private var address: String?
     @State private var isMapPresented = false
     @State private var isProfileActive = false
@@ -13,71 +13,74 @@ struct JobDetailView: View {
     @State private var selectedJob: JobPosting?
     @State private var isSignInSuccess = true
     @State private var isSignInViewActive = false
+    var jobID: String?
     
     var body: some View {
         NavigationView {
             VStack {
-                Text("Company: \(jobPosting.companyName)")
-                    .font(.headline)
-                    .padding(.bottom, 5)
-                Text("Description: \(jobPosting.jobDescription)")
-                    .font(.subheadline)
-                    .padding(.bottom, 5)
-                Text("Job Location:")
-                    .font(.body)
-                    .padding(.bottom, 5)
-                if let coordinates = jobPosting.coordinates {
-                    Text("Location: \(coordinates.latitude), \(coordinates.longitude)")
+                if let jobPosting = jobPosting {
+                    Text("Company: \(jobPosting.companyName)")
+                        .font(.headline)
+                        .padding(.bottom, 5)
+                    Text("Description: \(jobPosting.jobDescription)")
                         .font(.subheadline)
                         .padding(.bottom, 5)
-                    
-                    if let address = address {
-//                        Text("Address: \(address)")
-//                            .font(.subheadline)
-//                            .padding(.bottom, 5)
-                    } else {
-//                        Button("Fetch Address") {
-//                            fetchAddress()
-//                        }
-//                        .padding()
-//                        .background(Color.blue)
-//                        .foregroundColor(.white)
-//                        .cornerRadius(8)
-//                        .padding(.bottom, 10)
+                    //                Text("Job Location:")
+                    //                    .font(.body)
+                    //                    .padding(.bottom, 5)
+                    if let coordinates = jobPosting.coordinates {
+                        //                    Text("Location: \(coordinates.latitude), \(coordinates.longitude)")
+                        //                        .font(.subheadline)
+                        //                        .padding(.bottom, 5)
+                        
+                        if let address = address {
+                            Text("Address: \(address)")
+                                .font(.subheadline)
+                                .padding(.bottom, 5)
+                        } else {
+                            //                        Button("Fetch Address") {
+                            //                            fetchAddress()
+                            //                        }
+                            //                        .padding()
+                            //                        .background(Color.blue)
+                            //                        .foregroundColor(.white)
+                            //                        .cornerRadius(8)
+                            //                        .padding(.bottom, 10)
+                        }
+                        
+                        
+                        // Mini Map Button
+                        Button(action: {
+                            isMapPresented.toggle()
+                        }) {
+                            ZStack {
+                                Map(coordinateRegion: .constant(MKCoordinateRegion(
+                                    center: coordinates,
+                                    span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                )))
+                                .frame(height: 200)
+                                .cornerRadius(8)
+                                
+                                // Add a marker pin
+                                Image(systemName: "mappin")
+                                    .foregroundColor(.red)
+                                    .imageScale(.large)
+                                    .frame(width: 32, height: 32)
+                            }
+                        }
+                        .fullScreenCover(isPresented: $isMapPresented) {
+                            MapView(coordinates: coordinates, placemarkTitle: jobPosting.companyName, selectedJob: $selectedJob)
+                        }
+                        
+                        Spacer()
+                        
+                        // System back button
+                        NavigationLink("", destination: EmptyView())
+                            .navigationBarHidden(true)
+                            .navigationBarBackButtonHidden(true)
                     }
-                    
-                    // Mini Map Button
-                    Button(action: {
-                                           isMapPresented.toggle()
-                                       }) {
-                                           ZStack {
-                                               Map(coordinateRegion: .constant(MKCoordinateRegion(
-                                                   center: coordinates,
-                                                   span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-                                               )))
-                                               .frame(height: 200)
-                                               .cornerRadius(8)
-                                               
-                                               // Add a marker pin
-                                               Image(systemName: "mappin")
-                                                   .foregroundColor(.red)
-                                                   .imageScale(.large)
-                                                   .frame(width: 32, height: 32)
-                                           }
-                                       }
-                                       .fullScreenCover(isPresented: $isMapPresented) {
-                                           MapView(coordinates: coordinates, placemarkTitle: jobPosting.companyName, selectedJob: $selectedJob)
-                                       }
-                                       
-                                       Spacer()
-                                       
-                                       // System back button
-                                       NavigationLink("", destination: EmptyView())
-                                           .navigationBarHidden(true)
-                                           .navigationBarBackButtonHidden(true)
-                                   }
-                               }
-            
+                }
+            }
                                .padding()
                            }
         .navigationBarTitle("Jobs Board")
@@ -86,7 +89,7 @@ struct JobDetailView: View {
                        }
                        
                        private func fetchAddress() {
-                           guard let coordinates = jobPosting.coordinates else {
+                           guard let coordinates = jobPosting?.coordinates else {
                                return
                            }
 

@@ -60,6 +60,10 @@ struct ProfileView: View {
                             .padding(.trailing, 16)
                         }
                     }
+                    .onAppear {
+                        // Refresh the favorites when the view appears
+                        dataManager.fetchCurrentUserFavorites()
+                    }
                 }
                 Spacer()
 
@@ -112,6 +116,7 @@ struct ProfileView: View {
             )
         }
         .navigationBarBackButtonHidden(true)
+        
     }
     
     private func fetchData() {
@@ -121,13 +126,16 @@ struct ProfileView: View {
         }
     }
     private func toggleFavorite(for id: String) {
-        if favorites.contains(id) {
-            dataManager.removeFavorite(favoriteId: id)
-            favorites.remove(id)
-        } else {
-            dataManager.addFavorite(favoriteId: id)
-            favorites.insert(id)
+
+        dataManager.removeFavorite(favoriteId: id) {
+            // This will be called after the favorite is removed
+            // Update the local state to refresh the view
+            fetchFavoriteAccounts()
+            DispatchQueue.main.async {
+                self.favorites.remove(id)
+            }
         }
+  
     }
 
 
@@ -145,7 +153,7 @@ struct ProfileView: View {
     }
 
     private func fetchFavoriteAccounts() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
+        guard let id = Auth.auth().currentUser?.uid else { return }
 
         dataManager.fetchCurrentUserFavorites { favoritesSet in
             self.favoriteAccounts = dataManager.accounts.filter { favoritesSet.contains($0.id) }

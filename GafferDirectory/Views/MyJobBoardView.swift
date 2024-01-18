@@ -1,18 +1,111 @@
-//
-//  MyJobBoardView.swift
-//  GafferDirectory
-//
-//  Created by Dylon Angol on 18/01/2024.
-//
-
 import SwiftUI
+import Firebase
+import CoreLocation
 
 struct MyJobBoardView: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
-}
+    @EnvironmentObject private var dataManager: DataManager
+    @State private var selectedJob: JobPosting?
+    @State private var isProfileActive = false
+    @State private var isListViewActive = false
+    @State private var isJobBoardViewActive = false
+    @State private var isSignInViewActive = false
+    @State private var isSignedIn = true
 
-#Preview {
-    MyJobBoardView()
-}
+    private var currentUserId: String {
+        Auth.auth().currentUser?.uid ?? ""
+    }
+
+    var body: some View {
+        NavigationView {
+            VStack {
+                List(dataManager.jobPostings.filter { $0.userID == currentUserId }, id: \.id) { jobPosting in
+                    NavigationLink(destination: JobDetailView(jobPosting: jobPosting)) {
+                        VStack(alignment: .leading) {
+                            Text("Job Title: \(jobPosting.companyName)")
+                                .font(.headline)
+                                .padding(.bottom, 5)
+                            Text("Description: \(jobPosting.jobDescription)")
+                                .font(.subheadline)
+                                .padding(.bottom, 5)
+                            Text("Postcode: \(jobPosting.postcode)")
+                                .font(.subheadline)
+                                .padding(.bottom, 5)
+                        }
+                        .multilineTextAlignment(.leading)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .navigationBarTitle("My Job Board", displayMode: .inline)
+                .navigationBarItems(leading: NavigationLink(destination: JobPostingView()) {
+                    Text("Post a Job")
+                })
+                .navigationBarBackButtonHidden(true)
+                
+                Spacer()
+                
+                CustomNavigationBar(
+                                isProfileActive: $isProfileActive,
+                                isListViewActive: $isListViewActive,
+                                isJobBoardActive: $isJobBoardViewActive,
+                                isSignInViewActive: $isSignInViewActive,
+                                isSignedIn: $isSignedIn, // Pass this binding
+                                listAction: {
+                                    // Handle User List action
+                                    isListViewActive = true
+                                },
+                                jobBoardAction: {
+                                    // Handle Jobs Board action
+                                    isJobBoardViewActive = true
+                                },
+                                profileAction: {
+                                    // Handle Profile View action
+                                    isProfileActive = true
+                                },
+                                signInAction: {
+                                    // Handle Sign In action
+                                    isSignInViewActive = true
+                                }
+                            )
+                .padding(.bottom, 8)
+                }
+
+            
+            .fullScreenCover(item: $selectedJob) { job in
+                JobDetailView(jobPosting: job)
+            }
+            .background(
+                        NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+                    .background(
+                        NavigationLink(destination: ListView(), isActive: $isListViewActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+                    .background(
+                        NavigationLink(destination: JobBoardView(), isActive: $isJobBoardViewActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+                    .background(
+                        NavigationLink(destination: SignInView(isSignedIn: $isSignedIn), isActive: $isSignInViewActive) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    )
+        }
+        .navigationBarBackButtonHidden(true)
+        .environmentObject(dataManager)
+        .onAppear {
+            fetchJobPostings()
+        }
+    }
+
+    private func fetchJobPostings() {
+            dataManager.fetchCurrentUserJobs() // Ensure you have this method in DataManager
+        }
+    }

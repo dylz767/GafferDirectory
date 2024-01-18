@@ -37,8 +37,13 @@ struct JobBoardView: View {
                     Text("Post a Job")
                 }
                 )
-//                .navigationBarBackButtonHidden(true)
                 .navigationBarBackButtonHidden(true)
+                .navigationBarItems(trailing: NavigationLink(destination: MyJobBoardView()) {
+                    Text("My Jobs")
+                }
+                )
+                .navigationBarBackButtonHidden(true)
+//                .navigationBarBackButtonHidden(true)
                 
                 Spacer()
                 

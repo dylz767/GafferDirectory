@@ -45,6 +45,7 @@ struct ListView: View {
                     }
                 }
                 .onAppear {
+                    dataManager.fetchCurrentUserFavorites()
                     fetchData()
                 }
                 
@@ -97,6 +98,7 @@ struct ListView: View {
             )
         }
         .navigationBarBackButtonHidden(true)
+        
     }
 
     private func fetchData() {

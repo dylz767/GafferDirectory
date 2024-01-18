@@ -1,18 +1,25 @@
-//
-//  LocationManager.swift
-//  GafferDirectory
-//
-//  Created by Dylon Angol on 18/01/2024.
-//
+import Foundation
+import CoreLocation
 
-import SwiftUI
+class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    private let locationManager = CLLocationManager()
+    @Published var currentLocation: CLLocation?
 
-struct LocationManager: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+    override init() {
+        super.init()
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.requestWhenInUseAuthorization()  // or requestAlwaysAuthorization() based on your need
+        locationManager.startUpdatingLocation()
     }
-}
 
-#Preview {
-    LocationManager()
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        currentLocation = locations.first
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Error getting location: \(error)")
+    }
+
+    // Add more delegate methods as needed
 }

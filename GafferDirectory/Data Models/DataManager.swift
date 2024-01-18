@@ -3,6 +3,40 @@ import CoreLocation
 import Firebase
 
 extension DataManager {
+    func fetchCurrentUserJobs() {
+        self.jobPostings.removeAll()
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("User is not authenticated. Cannot fetch jobs.")
+            return
+        }
+
+        let ref = db.collection("Jobs").whereField("userID", isEqualTo: currentUserId)
+        ref.getDocuments { snapshot, error in
+            guard error == nil else {
+                print("Error fetching jobs:", error!.localizedDescription)
+                return
+            }
+
+            if let snapshot = snapshot {
+                self.jobPostings = snapshot.documents.compactMap { document -> JobPosting? in
+                    let data = document.data()
+                    let id = data["id"] as? String ?? ""
+                    let userID = data["userID"] as? String ?? ""
+                    let companyName = data["companyName"] as? String ?? ""
+                    let jobDescription = data["jobDescription"] as? String ?? ""
+                    let postcode = data["postcode"] as? String ?? ""
+                    let coordinates = data["coordinates"] as? [String: Any] ?? [:]
+                    let latitude = coordinates["latitude"] as? Double ?? 0.0
+                    let longitude = coordinates["longitude"] as? Double ?? 0.0
+
+                    return JobPosting(id: id, userID: userID, companyName: companyName, jobDescription: jobDescription, coordinates: CLLocationCoordinate2D(latitude: latitude, longitude: longitude), postcode: postcode)
+                }
+                print("Fetched \(self.jobPostings.count) jobs for current user")
+            }
+        }
+    }
+}
+extension DataManager {
     // MARK: Favorites Management
     func fetchCurrentUserFavorites() {
         guard let currentUserId = Auth.auth().currentUser?.uid else {
@@ -36,7 +70,7 @@ extension DataManager {
 //            }
 //        }
 //    }
-    func addFavorite(favoriteId: String) {
+    func addFavorite(favoriteId: String, completion: (() -> Void)? = nil) {
             let userRef = db.collection("Users").document(currentUserId)  // currentUserId is the document ID
 
             userRef.updateData([
@@ -45,12 +79,15 @@ extension DataManager {
                 if let error = error {
                     print("Error adding favorite: \(error.localizedDescription)")
                 } else {
-                    self.currentUserFavorites.insert(favoriteId)
+                    DispatchQueue.main.async {
+                                self.currentUserFavorites.insert(favoriteId)
+                                completion?()
+                            }
                 }
             }
         }
     
-    func removeFavorite(favoriteId: String) {
+    func removeFavorite(favoriteId: String, completion: (() -> Void)? = nil) {
         let userRef = db.collection("Users").document(currentUserId)  // currentUserId is the document ID
 
         userRef.updateData([
@@ -59,7 +96,11 @@ extension DataManager {
             if let error = error {
                 print("Error removing favorite: \(error.localizedDescription)")
             } else {
-                self.currentUserFavorites.remove(favoriteId)
+                DispatchQueue.main.async {
+                    self.currentUserFavorites.remove(favoriteId)
+                    completion?()
+                }
+                
             }
         }
     }
@@ -129,6 +170,7 @@ class DataManager: ObservableObject {
     @Published var geocodingResult: Result<CLLocationCoordinate2D, Error>?
     @Published var geocodedJobPostings: [GeocodedJobPosting] = []
     @Published var currentUserFavorites: Set<String> = []
+    @Published var jobPostedID: String? = nil
     
     var currentUserId: String {
             return Auth.auth().currentUser?.uid ?? ""
@@ -142,11 +184,11 @@ class DataManager: ObservableObject {
     }
     
     
-    func addUser(userProfession: String, usersName: String, emailAdd: String) {
+    func addUser(userProfession: String, usersName: String, emailAdd: String, location: String) {
         if let userId = Auth.auth().currentUser?.uid {
             let ref = db.collection("Users").document(userId)
-            
-            let userData: [String: Any] = [
+
+            var userData: [String: Any] = [
                 "name": usersName,
                 "profession": userProfession,
                 "id": userId,
@@ -154,6 +196,9 @@ class DataManager: ObservableObject {
                 "email": emailAdd
             ]
             
+            // Add location data to userData
+            userData["location"] = location
+
             ref.setData(userData) { (error) in
                 if let error = error {
                     print("Error adding user:", error.localizedDescription)
@@ -460,6 +505,7 @@ class DataManager: ObservableObject {
                 print("Error posting job:", error.localizedDescription)
             } else {
                 print("Job posted successfully")
+                self.jobPostedID = jobPosting.id
             }
         }
     }

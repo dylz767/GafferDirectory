@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E70D19E82B599B37002C632A /* MyJobBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E70D19E72B599B37002C632A /* MyJobBoardView.swift */; };
+		E70D19EA2B59D3C9002C632A /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E70D19E92B59D3C9002C632A /* LocationManager.swift */; };
 		E714EC282B51E5DA00D86035 /* JobListMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E714EC272B51E5DA00D86035 /* JobListMapView.swift */; };
 		E714EC2A2B52371200D86035 /* MapNavView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E714EC292B52371200D86035 /* MapNavView.swift */; };
 		E714EC352B53629E00D86035 /* OpenAISwift in Frameworks */ = {isa = PBXBuildFile; productRef = E714EC342B53629E00D86035 /* OpenAISwift */; };
@@ -144,6 +146,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E70D19E72B599B37002C632A /* MyJobBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyJobBoardView.swift; sourceTree = "<group>"; };
+		E70D19E92B59D3C9002C632A /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		E714EC272B51E5DA00D86035 /* JobListMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobListMapView.swift; sourceTree = "<group>"; };
 		E714EC292B52371200D86035 /* MapNavView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapNavView.swift; sourceTree = "<group>"; };
 		E72C03022B4BB4CB0049EFED /* ConsoleObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleObserver.swift; sourceTree = "<group>"; };
@@ -305,6 +309,7 @@
 			children = (
 				E77254B82B465C1E00CEDA03 /* DataManager.swift */,
 				E72C030C2B4F60460049EFED /* GeocodedJobPosting.swift */,
+				E7872E5E2B547EAC0041444F /* Constants.swift */,
 				E77254B62B4659B700CEDA03 /* Account.swift */,
 				E77254D22B4B7B8F00CEDA03 /* JobPosting.swift */,
 			);
@@ -324,6 +329,7 @@
 		E772543E2B43070E00CEDA03 = {
 			isa = PBXGroup;
 			children = (
+				E70D19E92B59D3C9002C632A /* LocationManager.swift */,
 				E7348A782B5779FF0039432C /* FavouriteUsersView.swift */,
 				E737E1802B55FD44004196AA /* GoogleService-Info.plist */,
 				E77254492B43070E00CEDA03 /* GafferDirectory */,
@@ -397,8 +403,8 @@
 				E72C03022B4BB4CB0049EFED /* ConsoleObserver.swift */,
 				E77254C92B4A0A0400CEDA03 /* ProfileView.swift */,
 				E77254BA2B46633B00CEDA03 /* ListView.swift */,
-				E7872E5E2B547EAC0041444F /* Constants.swift */,
 				E77254CD2B4B155700CEDA03 /* JobBoardView.swift */,
+				E70D19E72B599B37002C632A /* MyJobBoardView.swift */,
 				E714EC292B52371200D86035 /* MapNavView.swift */,
 				E714EC272B51E5DA00D86035 /* JobListMapView.swift */,
 				E72C03062B4C44950049EFED /* JobDetailView.swift */,
@@ -603,8 +609,10 @@
 				E72C030D2B4F60460049EFED /* GeocodedJobPosting.swift in Sources */,
 				E77254CE2B4B155700CEDA03 /* JobBoardView.swift in Sources */,
 				E772544B2B43070E00CEDA03 /* GafferDirectoryApp.swift in Sources */,
+				E70D19EA2B59D3C9002C632A /* LocationManager.swift in Sources */,
 				E714EC282B51E5DA00D86035 /* JobListMapView.swift in Sources */,
 				E7348A762B5744B10039432C /* AppCoordinator.swift in Sources */,
+				E70D19E82B599B37002C632A /* MyJobBoardView.swift in Sources */,
 				E77254D32B4B7B8F00CEDA03 /* JobPosting.swift in Sources */,
 				E7872E5F2B547EAC0041444F /* Constants.swift in Sources */,
 				E7872E612B547F720041444F /* ChatView.swift in Sources */,

@@ -12,6 +12,7 @@ struct ProfileView: View {
     @State private var isSignedIn = true
     @State private var selectedUser: Account?
     @State private var isNavigatingToProfile = false
+    @State private var favorites: Set<String> = []
     
     var body: some View {
         NavigationView {
@@ -30,29 +31,36 @@ struct ProfileView: View {
                     Text("No favorites found.")
                         .foregroundColor(.gray)
                 } else {
-                    HStack {
-                        ZStack {
-                            VStack(alignment: .leading) {
-                                List(favoriteAccounts, id: \.id) { account in
-                                    VStack(alignment: .leading) {
-                                        Text("Name: \(account.name)")
-                                            .font(.headline)
-                                        Text("Profession: \(account.profession)")
-                                            .font(.subheadline)
-                                    }
-                                    .multilineTextAlignment(.leading)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .contentShape(Rectangle()) // Makes the entire VStack tappable
-                                    .onTapGesture {
-                                        selectedUser = account
-                                        isNavigatingToProfile = true
-                                    }
+                    List(favoriteAccounts, id: \.id) { account in
+                        HStack {
+                            ZStack {
+                                VStack(alignment: .leading) {
+                                    Text("Name: \(account.name)")
+                                        .font(.headline)
+                                        .padding(.bottom, 5)
+                                    Text("Profession: \(account.profession)")
+                                        .font(.subheadline)
+                                        .padding(.bottom, 5)
                                 }
-                    }
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle()) // Makes the entire VStack tappable
+                                .onTapGesture {
+                                    selectedUser = account
+                                    isNavigatingToProfile = true
+                                }
+                            }
+                            
+                            Button(action: {
+                                toggleFavorite(for: account.id)
+                            }) {
+                                Image(systemName: favorites.contains(account.id) ? "star" : "star.fill" )
+                                    .foregroundColor(favorites.contains(account.id) ? .gray : .yellow )
+                            }
+                            .padding(.trailing, 16)
                         }
                     }
                 }
-
                 Spacer()
 
                 CustomNavigationBar(
@@ -106,6 +114,23 @@ struct ProfileView: View {
         .navigationBarBackButtonHidden(true)
     }
     
+    private func fetchData() {
+        dataManager.fetchUsers()
+        dataManager.fetchCurrentUserFavorites { fetchedFavorites in
+            self.favorites = fetchedFavorites
+        }
+    }
+    private func toggleFavorite(for id: String) {
+        if favorites.contains(id) {
+            dataManager.removeFavorite(favoriteId: id)
+            favorites.remove(id)
+        } else {
+            dataManager.addFavorite(favoriteId: id)
+            favorites.insert(id)
+        }
+    }
+
+
     private func setupView() {
         fetchCurrentUserProfile()
         fetchFavoriteAccounts()

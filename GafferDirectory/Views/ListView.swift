@@ -10,109 +10,112 @@ struct ListView: View {
     @State private var isSignInViewActive = false
     @State private var favorites: Set<String> = []
     @State private var isSignedIn = true
+    @State private var isNavigatingToProfile = false
 
     var body: some View {
         NavigationView {
             VStack {
                 List(dataManager.accounts, id: \.id) { account in
                     HStack {
-                        Button(action: {
-                            self.selectedUser = account
-                        }) {
+                        ZStack {
                             VStack(alignment: .leading) {
                                 Text("Name: \(account.name)")
+                                    .font(.headline)
+                                    .padding(.bottom, 5)
                                 Text("Profession: \(account.profession)")
+                                    .font(.subheadline)
+                                    .padding(.bottom, 5)
+                            }
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle()) // Makes the entire VStack tappable
+                            .onTapGesture {
+                                selectedUser = account
+                                isNavigatingToProfile = true
                             }
                         }
                         
-                        Spacer()
-                        
-                        FavoriteButton(isFavorite: favorites.contains(account.id)) {
-                            if favorites.contains(account.id) {
-                                dataManager.removeFavorite(for: dataManager.currentUserId, favoriteId: account.id)
-                                favorites.remove(account.id)
-                            } else {
-                                dataManager.addFavorite(for: dataManager.currentUserId, favoriteId: account.id)
-                                favorites.insert(account.id)
-                            }
+                        Button(action: {
+                            toggleFavorite(for: account.id)
+                        }) {
+                            Image(systemName: favorites.contains(account.id) ? "star.fill" : "star")
+                                .foregroundColor(favorites.contains(account.id) ? .yellow : .gray)
                         }
+                        .padding(.trailing, 16)
                     }
                 }
                 .onAppear {
-                                   fetchData() // Fetch data when the view appears
-                               }
-                .onAppear {
-                    dataManager.fetchCurrentUserFavorites { fetchedFavorites in
-                        self.favorites = fetchedFavorites
-                    }}
+                    fetchData()
+                }
                 
                 Spacer()
-               
-                
                 CustomNavigationBar(
                     isProfileActive: $isProfileActive,
                     isListViewActive: $isListViewActive,
                     isJobBoardActive: $isJobBoardViewActive,
                     isSignInViewActive: $isSignInViewActive,
-                    isSignedIn: $isSignedIn, // Pass this binding
+                    isSignedIn: $isSignedIn,
                     listAction: {
-                        // Handle User List action
                         isListViewActive = true
                     },
                     jobBoardAction: {
-                        // Handle Jobs Board action
                         isJobBoardViewActive = true
                     },
                     profileAction: {
-                        // Handle Profile View action
                         isProfileActive = true
                     },
                     signInAction: {
-                        // Handle Sign In action
                         isSignInViewActive = true
                     }
                 )
                 .padding(.bottom, 8)
             }
-            
             .navigationBarTitle("Users", displayMode: .inline)
             .navigationBarItems(leading: NavigationLink(destination: ChatView()) {
                 Text("robot")
             })
-        
-        .fullScreenCover(item: $selectedUser) { user in
-            UserProfileView(user: user)
-        }
-        
+            .fullScreenCover(item: $selectedUser) { user in
+                UserProfileView(user: user)
+            }
             .background(
                 NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
                     EmptyView()
                 }
-                    .hidden()
+                .hidden()
             )
             .background(
                 NavigationLink(destination: JobBoardView(), isActive: $isJobBoardViewActive) {
                     EmptyView()
                 }
-                    .hidden()
+                .hidden()
             )
             .background(
                 NavigationLink(destination: SignInView(isSignedIn: $isSignedIn), isActive: $isSignInViewActive) {
                     EmptyView()
                 }
-                    .hidden()
+                .hidden()
             )
         }
         .navigationBarBackButtonHidden(true)
     }
-    private func fetchData() {
-            dataManager.fetchUsers()
-            dataManager.fetchCurrentUserFavorites { fetchedFavorites in
-                self.favorites = fetchedFavorites
-            }
-        }
-}
 
+    private func fetchData() {
+        dataManager.fetchUsers()
+        dataManager.fetchCurrentUserFavorites { fetchedFavorites in
+            self.favorites = fetchedFavorites
+        }
+    }
+
+    private func toggleFavorite(for id: String) {
+        if favorites.contains(id) {
+            dataManager.removeFavorite(for: dataManager.currentUserId, favoriteId: id)
+            favorites.remove(id)
+        } else {
+            dataManager.addFavorite(for: dataManager.currentUserId, favoriteId: id)
+            favorites.insert(id)
+        }
+    }
+}
 
 struct FavoriteButton: View {
     var isFavorite: Bool

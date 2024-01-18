@@ -390,9 +390,9 @@
 			isa = PBXGroup;
 			children = (
 				E77254BC2B48595A00CEDA03 /* SignUpView.swift */,
+				E77254C72B4A09DE00CEDA03 /* SignInView.swift */,
 				E77254D42B4B7BBA00CEDA03 /* JobPostingView.swift */,
 				E77254CF2B4B308000CEDA03 /* UserProfileView.swift */,
-				E77254C72B4A09DE00CEDA03 /* SignInView.swift */,
 				E7348A7A2B57C60F0039432C /* MainView.swift */,
 				E72C03022B4BB4CB0049EFED /* ConsoleObserver.swift */,
 				E77254C92B4A0A0400CEDA03 /* ProfileView.swift */,

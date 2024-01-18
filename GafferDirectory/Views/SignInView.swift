@@ -4,11 +4,8 @@ import Firebase
 struct SignInView: View {
     @State private var email = ""
     @State private var password = ""
-    @State private var isProfileActive = false
-    @State private var isListViewActive = false
-    @State private var isSignInSuccess = false
-    @State private var isSignInViewActive = true
-    @Binding var isSignedIn: Bool // Added binding
+    @Binding var isSignedIn: Bool // Binding to update sign-in state
+    @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         NavigationView {
@@ -16,50 +13,45 @@ struct SignInView: View {
                 TextField("Email", text: $email)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
-
+                
                 SecureField("Password", text: $password)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
-
-                NavigationLink(destination: ProfileView(), isActive: $isSignInSuccess) {
-                    EmptyView()
-                }
-                .hidden()
-
-                Button(action: {
+                
+                Button("Login") {
                     signIn()
-                }) {
-                    Text("Login")
+                    do {
+                        //very useful way of closing the current page to open the next
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    
                 }
                 .foregroundColor(.white)
                 .padding()
                 .background(Color.blue)
                 .cornerRadius(8)
-                .navigationBarBackButtonHidden(true)
-                NavigationLink(destination: SignUpView()) {
+                
+                NavigationLink(destination: SignUpView(), label: {
                     Text("Don't have an account?")
                         .foregroundColor(.blue)
-                        .padding(.bottom, 20)
-                        .navigationBarBackButtonHidden(true)
-                }
-                .navigationBarBackButtonHidden(true)
-                
+                })
+                .padding(.top, 20)
             }
             .padding()
-            .navigationBarBackButtonHidden(true)
             .navigationBarTitle("Sign in", displayMode: .inline)
         }
         .navigationBarBackButtonHidden(true)
     }
 
     private func signIn() {
-            Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
-                if let error = error {
-                    print("Error signing in: \(error.localizedDescription)")
-                } else {
-                    print("Sign in successful!")
-                    self.isSignedIn = true // Update this on successful sign-in
-                }
+        Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+            if let error = error {
+                print("Error signing in: \(error.localizedDescription)")
+                // Optionally, show an alert or some UI feedback
+            } else {
+                print("Sign in successful!")
+                self.isSignedIn = true // Update this on successful sign-in
             }
         }
     }
+}

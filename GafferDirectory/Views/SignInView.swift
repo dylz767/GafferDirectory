@@ -6,6 +6,7 @@ struct SignInView: View {
     @State private var password = ""
     @Binding var isSignedIn: Bool // Binding to update sign-in state
     @Environment(\.presentationMode) var presentationMode
+    @State private var navigateToSignUp = false // State for controlling navigation
 
     var body: some View {
         NavigationView {
@@ -20,23 +21,23 @@ struct SignInView: View {
                 
                 Button("Login") {
                     signIn()
-                    do {
-                        //very useful way of closing the current page to open the next
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    
                 }
                 .foregroundColor(.white)
                 .padding()
                 .background(Color.blue)
                 .cornerRadius(8)
                 
-                NavigationLink(destination: SignUpView(), label: {
-                    Text("Don't have an account?")
-                        .foregroundColor(.blue)
-                })
+                Button("Don't have an account?") {
+                                    navigateToSignUp = true // Trigger navigation
+                                }
                 .padding(.top, 20)
             }
+            .background(
+                            NavigationLink(destination: SignUpView(), isActive: $navigateToSignUp) {
+                                EmptyView()
+                            }
+                            .hidden()
+                        )
             .padding()
             .navigationBarTitle("Sign in", displayMode: .inline)
         }
@@ -51,6 +52,7 @@ struct SignInView: View {
             } else {
                 print("Sign in successful!")
                 self.isSignedIn = true // Update this on successful sign-in
+                presentationMode.wrappedValue.dismiss()
             }
         }
     }

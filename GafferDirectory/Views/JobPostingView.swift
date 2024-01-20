@@ -11,10 +11,16 @@ struct JobPostingView: View {
     @State private var isJobBoardViewActive = false
     @State private var isSignInViewActive = false
     @State private var isSignedIn = true
-    @State private var address: String = "" // New state for address
+    @State private var address: String = ""
     @State private var postedJob: JobPosting?
     @State private var navigateToJobDetails = false
+    @State private var selectedRoles: [Profession] = [] // For storing selected roles
+    @State private var selectedCrewMembers: [String: String] = [:] // Role: UserID
     
+
+    // All professions
+    let allRoles: [Profession] = [.dp, .gaffer, .spark, .producer, .artDepartment, .hmua, .editor, .colourGrade, .runner, .director, .photographer, .photographerAssistant]
+
     var body: some View {
         NavigationView {
             VStack {
@@ -29,7 +35,22 @@ struct JobPostingView: View {
                 TextField("Address", text: $address)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
-                
+
+                // Roles Picker
+                Text("Select Roles:")
+                               List {
+                                   ForEach(allRoles, id: \.self) { role in
+                                       MultipleSelectionRow(title: role.rawValue, isSelected: self.selectedRoles.contains(role)) {
+                                           if self.selectedRoles.contains(role) {
+                                               self.selectedRoles.removeAll { $0 == role }
+                                           } else {
+                                               self.selectedRoles.append(role)
+                                           }
+                                       }
+                                   }
+                               }
+
+
                 Button("Post Job") {
                     postJob()
                 }
@@ -46,146 +67,76 @@ struct JobPostingView: View {
             .navigationBarBackButtonHidden(true)
             .background(
                 VStack {
-                    NavigationLink(
-                                destination: JobDetailView(jobPosting: postedJob),
-                                isActive: $navigateToJobDetails
-                            ) {
-                                EmptyView()
-                            }
-                            .hidden()
-                    
-                    .navigationTitle("Post a Job")
-                    .navigationBarItems(leading: EmptyView())
-                    .navigationBarBackButtonHidden(true)
-                    
+                    if let postedJob = postedJob{
+                        NavigationLink(
+                            destination: JobDetailView(jobPosting: postedJob),
+                            isActive: $navigateToJobDetails
+                        ) {
+                            EmptyView()
+                        }
+                        .hidden()
+                    }
                     Spacer()
                     
-                    CustomNavigationBar(
-                                    isProfileActive: $isProfileActive,
-                                    isListViewActive: $isListViewActive,
-                                    isJobBoardActive: $isJobBoardViewActive,
-                                    isSignInViewActive: $isSignInViewActive,
-                                    isSignedIn: $isSignedIn, // Pass this binding
-                                    listAction: {
-                                        // Handle User List action
-                                        isListViewActive = true
-                                    },
-                                    jobBoardAction: {
-                                        // Handle Jobs Board action
-                                        isJobBoardViewActive = true
-                                    },
-                                    profileAction: {
-                                        // Handle Profile View action
-                                        isProfileActive = true
-                                    },
-                                    signInAction: {
-                                        // Handle Sign In action
-                                        isSignInViewActive = true
-                                    }
-                                )
                     .padding(.bottom, 8)
                 }
-                    .background(
-                            NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
-                                EmptyView()
-                            }
-                            .hidden()
-                        )
-                        .background(
-                            NavigationLink(destination: ListView(), isActive: $isListViewActive) {
-                                EmptyView()
-                            }
-                            .hidden()
-                        )
-                        .background(
-                            NavigationLink(destination: JobBoardView(), isActive: $isJobBoardViewActive) {
-                                EmptyView()
-                            }
-                            .hidden()
-                        )
-                        .background(
-                            NavigationLink(destination: SignInView(isSignedIn: $isSignedIn), isActive: $isSignInViewActive) {
-                                EmptyView()
-                            }
-                            .hidden()
-                        )
             )
         }
-        .navigationBarBackButtonHidden(true)
+        .navigationBarBackButtonHidden(false)
     }
     
     private func postJob() {
         guard let userID = Auth.auth().currentUser?.uid else {
-            print("User ID is nil")
-            return
-        }
-
-        dataManager.geocodeAddress(address) { result in
-            switch result {
-            case .success(let (geocodedCoordinates, postcode)):
-                let newJobPosting = JobPosting(
-                    id: UUID().uuidString,
-                    userID: userID,
-                    companyName: self.companyName,
-                    jobDescription: self.jobDescription,
-                    coordinates: geocodedCoordinates,
-                    postcode: postcode
-                )
-
-                // Save the job posting to Firestore
-                print("Posting job:", newJobPosting)
-                self.dataManager.postJob(jobPosting: newJobPosting)
-
-                // Clear the input fields after posting
-                self.companyName = ""
-                self.jobDescription = ""
-                self.address = ""
-
-                // Update the state for navigation
-                self.postedJob = newJobPosting
-                self.navigateToJobDetails = true
-
-            case .failure(let error):
-                // Handle the geocoding error here
-                print("Geocoding error: \(error.localizedDescription)")
+                print("User ID is nil")
+                return
             }
-        }
+        let newJobPosting = JobPosting(
+            id: UUID().uuidString,
+            userID: userID,
+            companyName: companyName,
+            jobDescription: jobDescription,
+            coordinates: nil, // Coordinates need to be set if available
+            postcode: "", // Set the postcode if available
+            requiredProfessions: selectedRoles.map { $0.rawValue } // Map selected roles to their raw values
+            
+        )
+
+        // Here, handle the geocoding if necessary and post the job using dataManager
+        dataManager.postJobWithGeocoding(jobPosting: newJobPosting, address: address, selectedRoles: selectedCrewMembers)
     }
-    func geocodeAddresses(_ addresses: [String], completion: @escaping (Result<[(CLLocationCoordinate2D, String)], Error>) -> Void) {
-        let geocoder = CLGeocoder()
-        var geocodingResults: [(CLLocationCoordinate2D, String)] = []
-        var errors: [Error] = []
+}
 
-        let dispatchGroup = DispatchGroup()
+struct MultipleSelectionRow: View {
+    var title: String
+    var isSelected: Bool
+    var action: () -> Void
 
-        for address in addresses {
-            dispatchGroup.enter()
-
-            geocoder.geocodeAddressString(address) { (placemarks, error) in
-                defer {
-                    dispatchGroup.leave()
+    var body: some View {
+        Button(action: self.action) {
+            HStack {
+                Text(title)
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark")
                 }
-
-                if let error = error {
-                    errors.append(error)
-                    return
-                }
-
-                if let location = placemarks?.first?.location?.coordinate, let postcode = placemarks?.first?.postalCode {
-                    geocodingResults.append((location, postcode))
-                } else {
-                    let customError = NSError(domain: "GeocodingErrorDomain", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid coordinates for address: \(address)"])
-                    errors.append(customError)
-                }
-            }
-        }
-
-        dispatchGroup.notify(queue: .main) {
-            if errors.isEmpty {
-                completion(.success(geocodingResults))
-            } else {
-                completion(.failure(errors.first ?? NSError(domain: "GeocodingErrorDomain", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error"])))
             }
         }
     }
 }
+
+// Enum for professions
+enum Profession: String, CaseIterable {
+    case dp = "DP"
+    case gaffer = "Gaffer"
+    case spark = "Spark"
+    case producer = "Producer"
+    case artDepartment = "Art Department"
+    case hmua = "HMUA"
+    case editor = "Editor"
+    case colourGrade = "Colour Grade"
+    case runner = "Runner"
+    case director = "Director"
+    case photographer = "Photographer"
+    case photographerAssistant = "Photographer Assistant"
+}
+

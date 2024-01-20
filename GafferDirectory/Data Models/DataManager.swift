@@ -186,6 +186,7 @@ class DataManager: ObservableObject {
     @Published var geocodedJobPostings: [GeocodedJobPosting] = []
     @Published var currentUserFavorites: Set<String> = []
     @Published var jobPostedID: String? = nil
+    @Published var selectedCrewMembers: [String: String] = [:]
     
     var currentUserId: String {
             return Auth.auth().currentUser?.uid ?? ""
@@ -260,37 +261,35 @@ class DataManager: ObservableObject {
             }
         }
     
-    func fetchUsersFilteredByProfession(professions: [String]) {
-            accounts.removeAll()
-            let db = Firestore.firestore()
-            let ref = db.collection("Users")
-            ref.getDocuments { snapshot, error in
-                guard error == nil else {
-                    print("Error fetching users:", error!.localizedDescription)
-                    return
+    func fetchUsersFilteredByProfession(professions: [String]) async -> [Account] {
+        var filteredAccounts: [Account] = []
+        let db = Firestore.firestore()
+        let ref = db.collection("Users")
+
+        do {
+            let snapshot = try await ref.getDocuments()
+            for document in snapshot.documents {
+                let data = document.data()
+
+                let id = data["id"] as? String ?? ""
+                let userProfessions = data["profession"] as? [String] ?? []
+                let name = data["name"] as? String ?? ""
+                let email = data["email"] as? String ?? ""
+                let userId = data["userId"] as? String ?? ""
+
+                if !professions.isEmpty && !userProfessions.contains(where: professions.contains) {
+                    continue
                 }
-                if let snapshot = snapshot {
-                    for document in snapshot.documents {
-                        let data = document.data()
 
-                        let id = data["id"] as? String ?? ""
-                        let userProfessions = data["profession"] as? [String] ?? []
-                        let name = data["name"] as? String ?? ""
-                        let email = data["email"] as? String ?? ""
-                        let userId = data["userId"] as? String ?? ""
-
-                        if !professions.isEmpty && !userProfessions.contains(where: professions.contains) {
-                            continue
-                        }
-
-                        let account = Account(id: id, userId: userId, name: name, professions: userProfessions, email: email)
-                        self.accounts.append(account)
-                    }
-                    print("Fetched \(self.accounts.count) users with specified professions")
-                }
+                let account = Account(id: id, userId: userId, name: name, professions: userProfessions, email: email)
+                filteredAccounts.append(account)
             }
+        } catch {
+            print("Error fetching users:", error.localizedDescription)
         }
 
+        return filteredAccounts
+    }
 
     func fetchUsersByUserId(userId: String, completion: @escaping ([Account]) -> Void) {
         accounts.removeAll()
@@ -343,38 +342,72 @@ class DataManager: ObservableObject {
             }
         }
     }
+    func fetchUsersWithProfession(profession: String, completion: @escaping ([Account]) -> Void) {
+        accounts.removeAll()
+        let db = Firestore.firestore()
+        let ref = db.collection("Users").whereField("profession", arrayContains: profession)
+        ref.getDocuments { snapshot, error in
+            guard let documents = snapshot?.documents, error == nil else {
+                print("Error fetching users: \(error?.localizedDescription ?? "unknown error")")
+                completion([])
+                return
+            }
+
+            let filteredUsers = documents.compactMap { doc -> Account? in
+                guard let id = doc.data()["id"] as? String,
+                      let name = doc.data()["name"] as? String,
+                      let email = doc.data()["email"] as? String,
+                      let userId = doc.data()["userId"] as? String else { return nil }
+
+                return Account(id: id, userId: userId, name: name, professions: [profession], email: email)
+            }
+
+            completion(filteredUsers)
+        }
+    }
     func fetchJobs() {
-            jobPostings.removeAll()
-            let ref = db.collection("Jobs")
-            ref.getDocuments { snapshot, error in
-                guard error == nil else {
-                    print("Error fetching jobs:", error!.localizedDescription)
-                    return
+        jobPostings.removeAll()
+        let ref = db.collection("Jobs")
+        ref.getDocuments { snapshot, error in
+            guard error == nil else {
+                print("Error fetching jobs:", error!.localizedDescription)
+                return
+            }
+            if let snapshot = snapshot {
+                for document in snapshot.documents {
+                    let data = document.data()
+
+                    let id = data["id"] as? String ?? ""
+                    let userID = data["userID"] as? String ?? ""
+                    let companyName = data["companyName"] as? String ?? ""
+                    let jobDescription = data["jobDescription"] as? String ?? ""
+                    let postcode = data["postcode"] as? String ?? ""
+
+                    // Coordinates should be a dictionary, not a string
+                    let coordinates = data["coordinates"] as? [String: Any] ?? [:]
+                    // Latitude and longitude should be Double, not String
+                    let latitude = coordinates["latitude"] as? Double ?? 0.0
+                    let longitude = coordinates["longitude"] as? Double ?? 0.0
+                    let location = CLLocation(latitude: latitude, longitude: longitude)
+
+                    // Retrieve and set requiredProfessions
+                    let requiredProfessions = data["requiredProfessions"] as? [String] ?? []
+
+                    let jobPosting = JobPosting(
+                        id: id,
+                        userID: userID,
+                        companyName: companyName,
+                        jobDescription: jobDescription,
+                        coordinates: location.coordinate,
+                        postcode: postcode,
+                        requiredProfessions: requiredProfessions // Set this field
+                    )
+                    self.jobPostings.append(jobPosting)
                 }
-                if let snapshot = snapshot {
-                    for document in snapshot.documents {
-                        let data = document.data()
-
-                        let id = data["id"] as? String ?? ""
-                        let userID = data["userID"] as? String ?? ""
-                        let companyName = data["companyName"] as? String ?? ""
-                        let jobDescription = data["jobDescription"] as? String ?? ""
-                        let postcode = data["postcode"] as? String ?? ""
-
-                        // Coordinates should be a dictionary, not a string
-                        let coordinates = data["coordinates"] as? [String: Any] ?? [:]
-                        // Latitude and longitude should be Double, not String
-                        let latitude = coordinates["latitude"] as? Double ?? 0.0
-                        let longitude = coordinates["longitude"] as? Double ?? 0.0
-                        let location = CLLocation(latitude: latitude, longitude: longitude)
-
-                        let jobPosting = JobPosting(id: id, userID: userID, companyName: companyName, jobDescription: jobDescription, coordinates: location.coordinate, postcode: postcode)
-                        self.jobPostings.append(jobPosting)
-                    }
-                    print("Fetched \(self.jobPostings.count) jobs")
-                }
+                print("Fetched \(self.jobPostings.count) jobs")
             }
         }
+    }
     func fetchJobPostings(completion: @escaping ([JobPosting]) -> Void) {
         jobPostings.removeAll()
         let db = Firestore.firestore()
@@ -494,29 +527,6 @@ class DataManager: ObservableObject {
         }
     }
 
-    func postJobWithGeocoding(jobPosting: JobPosting, coordinates: CLLocationCoordinate2D?) {
-        guard let coordinates = coordinates else {
-            print("Invalid coordinates")
-            return
-        }
-
-        let geocoder = CLGeocoder()
-
-        let location = CLLocation(latitude: coordinates.latitude, longitude: coordinates.longitude)
-
-        geocoder.reverseGeocodeLocation(location) { (placemarks, error) in
-            guard let placemark = placemarks?.first, let location = placemark.location?.coordinate else {
-                print("Geocoding error: \(error?.localizedDescription ?? "Unknown error")")
-                return
-            }
-
-            var updatedJobPosting = jobPosting
-            updatedJobPosting.coordinates = location
-
-            self.postJob(jobPosting: updatedJobPosting)
-        }
-    }
-
     func geocodeAddress(_ address: String, completion: @escaping (Result<(CLLocationCoordinate2D, String), Error>) -> Void) {
             let geocoder = CLGeocoder()
             geocoder.geocodeAddressString(address) { placemarks, error in
@@ -536,45 +546,71 @@ class DataManager: ObservableObject {
             }
         }
 
-    func postJob(jobPosting: JobPosting) {
-        let db = Firestore.firestore()
+    func postJob(jobPosting: JobPosting, selectedRoles: [String: String], requiredProfessions: [String]) {
+            let db = Firestore.firestore()
+            let ref = db.collection("Jobs").document(jobPosting.id)
 
-        let coordinates: [String: Double] = [
-            "latitude": jobPosting.coordinates?.latitude ?? 0.0,
-            "longitude": jobPosting.coordinates?.longitude ?? 0.0
-        ]
+            var jobData: [String: Any] = [
+                "id": jobPosting.id,
+                "userID": jobPosting.userID,
+                "companyName": jobPosting.companyName,
+                "jobDescription": jobPosting.jobDescription,
+                "postcode": jobPosting.postcode,
+                "requiredProfessions": requiredProfessions // Adding required professions
+            ]
 
-        let ref = db.collection("Jobs").document(jobPosting.id)
+            // Include coordinates if available
+            if let coordinates = jobPosting.coordinates {
+                jobData["coordinates"] = [
+                    "latitude": coordinates.latitude,
+                    "longitude": coordinates.longitude
+                ]
+            }
+            
+            // Include crew members for each role
+            jobData["crewMembers"] = selectedRoles
 
-        ref.setData([
-            "id": jobPosting.id,
-            "userID": jobPosting.userID,
-            "companyName": jobPosting.companyName,
-            "jobDescription": jobPosting.jobDescription,
-            "coordinates": coordinates, // Fix here: Use the coordinates dictionary
-            "postcode": jobPosting.postcode
-            // ... other properties you may have
-        ]) { error in
-            if let error = error {
-                print("Error posting job:", error.localizedDescription)
-            } else {
-                print("Job posted successfully")
-                self.jobPostedID = jobPosting.id
+            // Save the job posting to Firestore
+            ref.setData(jobData) { error in
+                if let error = error {
+                    print("Error posting job:", error.localizedDescription)
+                } else {
+                    print("Job posted successfully")
+                    // Update any relevant state variables here...
+                }
             }
         }
-    }
-    func postJobWithGeocoding(jobPosting: JobPosting, address: String) {
-        // Use a dispatch group to wait for geocoding task to finish
-        let dispatchGroup = DispatchGroup()
 
-        // Create a placeholder for the geocoded location and postcode
+    func postJobWithGeocoding(jobPosting: JobPosting, coordinates: CLLocationCoordinate2D?, selectedRoles: [String: String]) {
+        guard let coordinates = coordinates else {
+            print("Invalid coordinates")
+            return
+        }
+        
+        let geocoder = CLGeocoder()
+        let location = CLLocation(latitude: coordinates.latitude, longitude: coordinates.longitude)
+        
+        geocoder.reverseGeocodeLocation(location) { (placemarks, error) in
+            guard let placemark = placemarks?.first, let location = placemark.location?.coordinate else {
+                print("Geocoding error: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+            
+            var updatedJobPosting = jobPosting
+            updatedJobPosting.coordinates = location
+            
+            // Assuming you have a way to get requiredProfessions from jobPosting or elsewhere
+            let requiredProfessions = updatedJobPosting.requiredProfessions // Example
+
+            self.postJob(jobPosting: updatedJobPosting, selectedRoles: selectedRoles, requiredProfessions: requiredProfessions)
+        }
+    }
+    func postJobWithGeocoding(jobPosting: JobPosting, address: String, selectedRoles: [String: String]) {
+        let dispatchGroup = DispatchGroup()
         var geocodedLocation: CLLocationCoordinate2D?
         var geocodedPostcode: String?
 
-        // Enter the dispatch group for the geocoding task
         dispatchGroup.enter()
-
-        // Perform geocoding for the provided address
         geocodeAddress(address) { result in
             switch result {
             case .success(let (location, postcode)):
@@ -583,25 +619,23 @@ class DataManager: ObservableObject {
             case .failure(let error):
                 print("Geocoding error: \(error.localizedDescription)")
             }
-
-            // Leave the dispatch group when the geocoding task is done
             dispatchGroup.leave()
         }
 
-        // Notify when the geocoding task is finished
         dispatchGroup.notify(queue: .main) {
             guard let geocodedLocation = geocodedLocation, let geocodedPostcode = geocodedPostcode else {
                 print("Failed to geocode the address. Job not posted.")
                 return
             }
 
-            // Update the job posting with the geocoded location and postcode
             var updatedJobPosting = jobPosting
             updatedJobPosting.coordinates = geocodedLocation
             updatedJobPosting.postcode = geocodedPostcode
 
-            // Continue with posting the job to the database
-            self.postJob(jobPosting: updatedJobPosting)
+            // Assuming you have a way to get requiredProfessions from jobPosting or elsewhere
+            let requiredProfessions = updatedJobPosting.requiredProfessions // Example
+
+            self.postJob(jobPosting: updatedJobPosting, selectedRoles: selectedRoles, requiredProfessions: requiredProfessions)
         }
     }
     func geocodeJobPostings(completion: @escaping () -> Void) {

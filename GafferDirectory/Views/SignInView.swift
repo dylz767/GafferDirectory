@@ -7,6 +7,7 @@ struct SignInView: View {
     @Binding var isSignedIn: Bool // Binding to update sign-in state
     @Environment(\.presentationMode) var presentationMode
     @State private var navigateToSignUp = false // State for controlling navigation
+    
 
     var body: some View {
         NavigationView {

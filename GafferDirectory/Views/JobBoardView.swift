@@ -10,6 +10,7 @@ struct JobBoardView: View {
     @State private var isJobBoardViewActive = false
     @State private var isSignInViewActive = false
     @State private var isSignedIn = true
+    @Environment(\.presentationMode) var presentationMode
 
 
     var body: some View {
@@ -17,6 +18,7 @@ struct JobBoardView: View {
             VStack {
                 List(dataManager.jobPostings, id: \.id) { jobPosting in
                     NavigationLink(destination: JobDetailView(jobPosting: jobPosting)) {
+                        
                         VStack(alignment: .leading) {
                             Text("Job Title: \(jobPosting.companyName)")
                                 .font(.headline)
@@ -30,6 +32,7 @@ struct JobBoardView: View {
                         }
                         .multilineTextAlignment(.leading)
                     }
+                    
                     .buttonStyle(PlainButtonStyle())
                 }
                 .navigationBarTitle("Job Board", displayMode: .inline)

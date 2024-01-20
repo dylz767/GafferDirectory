@@ -13,11 +13,12 @@ struct Account: Identifiable, Hashable {
     var id: String
     var userId: String
     var name: String
-    var profession: String
+    var professions: [String] // Updated to store multiple professions
     var email: String
     var coordinates: CLLocationCoordinate2D?
     var favorites: [String]? // Optional, depending on your design choice
-    // Add more properties as needed
+    // ... other properties and methods ...
+
 
     // Ensure the struct is Hashable
     func hash(into hasher: inout Hasher) {

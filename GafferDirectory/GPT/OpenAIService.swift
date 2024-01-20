@@ -2,15 +2,29 @@ import Foundation
 import Alamofire
 
 extension OpenAIService {
+    
     func sendCustomQuery(query: String, userProfession: String?) async -> OpenAIChatResponse? {
         var contextualQuery = query
         if let profession = userProfession {
             // Add the profession as context to the query
-            contextualQuery = "Profession: \(profession)\n\(query)"
+            contextualQuery = "Profession: \(profession)\nQuery: \(query)"
         }
-        let body = OpenAIChatBody(model: "gpt-3.5-turbo-1106", messages: [OpenAIChatMessage(role: .user, content: contextualQuery)])
-        let headers: HTTPHeaders = ["Authorization": "Bearer \(Constants.openAIApiKey)"]
-        return try? await AF.request(endpointURL, method: .post, parameters: body, encoder: .json, headers: headers).serializingDecodable(OpenAIChatResponse.self).value
+        let openAIMessages = [OpenAIChatMessage(role: .user, content: contextualQuery)]
+        let body = OpenAIChatBody(model: "gpt-3.5-turbo", messages: openAIMessages)
+        let headers: HTTPHeaders = [
+            "Authorization": "Bearer \(Constants.openAIApiKey)",
+            "Content-Type": "application/json"
+        ]
+        
+        do {
+            let response = try await AF.request(endpointURL, method: .post, parameters: body, encoder: JSONParameterEncoder.default, headers: headers)
+                .serializingDecodable(OpenAIChatResponse.self)
+                .value
+            return response
+        } catch {
+            print("Error while sending custom query: \(error.localizedDescription)")
+            return nil
+        }
     }
 }
 class OpenAIService {

@@ -12,7 +12,11 @@ struct SignUpView: View {
     @State private var isSignUpSuccess = false
     @State private var navigateToListView = false
     @State private var emailInvalid = false
-    
+    @State private var selectedProfessions: [String] = []
+    @State private var isLocationValid: Bool? = nil
+    let allProfessions = ["DP", "Gaffer", "Spark", "Producer", "Art Department", "HMUA", "Editor", "Colour Grade", "Runner", "Director", "Photographer", "Photographer Assistant"]
+
+
     
     @Environment(\.presentationMode) var presentationMode
 
@@ -32,7 +36,16 @@ struct SignUpView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
                 
-                TextField("Profession", text: $newProfession)
+                Menu(professionSelectionText()) {
+                        ForEach(allProfessions, id: \.self) { profession in
+                            Button(profession) {
+                                toggleProfession(profession)
+                            }.disabled(selectedProfessions.count >= 3 && !selectedProfessions.contains(profession))
+                        }
+                        Button("Clear Selection") {
+                            selectedProfessions.removeAll()
+                        }
+                    }
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
                 
@@ -70,7 +83,13 @@ struct SignUpView: View {
                         .foregroundColor(.green)
                         .padding()
                 }
-                
+                if isLocationValid == false {
+                    Text("Enter valid location")
+                }
+                else
+                {
+                    
+                }
 
                 Spacer()
             }
@@ -91,24 +110,57 @@ struct SignUpView: View {
     }
 
     private func signUp() {
-        geocodeAddress(address) { geocodedCity in
-            Auth.auth().createUser(withEmail: newEmail, password: password) { authResult, error in
-                if let error = error as NSError? {
-                    // Handle different error codes here
-                    if error.code == AuthErrorCode.emailAlreadyInUse.rawValue {
-                        print("Email already exists")
-                        emailInvalid = true
-                    } else {
-                        print("Error creating user: \(error.localizedDescription)")
-                        
+           geocodeAddress(address) { geocodedCity in
+               if geocodedCity.isEmpty {
+                   isLocationValid = false
+               } else {
+                   isLocationValid = true
+                   Auth.auth().createUser(withEmail: newEmail, password: password) { authResult, error in
+                       // User creation logic
+                       if let error = error as NSError? {
+                           if error.code == AuthErrorCode.emailAlreadyInUse.rawValue {
+                               emailInvalid = true
+                           } else {
+                               print("Error creating user: \(error.localizedDescription)")
+                           }
+                           return
+                       }
+                       dataManager.addUser(userProfessions: selectedProfessions, usersName: newName, emailAdd: newEmail, location: geocodedCity)
+                       isSignUpSuccess = true
+                       signInUser()
+                   }
+               }
+           }
+       }
+    private func professionPicker() -> some View {
+            Menu {
+                ForEach(allProfessions, id: \.self) { profession in
+                    Button(profession) {
+                        if selectedProfessions.contains(profession) {
+                            selectedProfessions.removeAll { $0 == profession }
+                        } else if selectedProfessions.count < 3 {
+                            selectedProfessions.append(profession)
+                        }
                     }
-                    return
                 }
-                print("User created successfully!")
-                self.dataManager.addUser(userProfession: newProfession, usersName: newName, emailAdd: newEmail, location: geocodedCity)
-                self.isSignUpSuccess = true
-                self.signInUser()
+            } label: {
+                Text("Select Profession(s)")
+                    .foregroundColor(.blue)
             }
+        }
+    private func toggleProfession(_ profession: String) {
+        if selectedProfessions.contains(profession) {
+            selectedProfessions.removeAll { $0 == profession }
+        } else if selectedProfessions.count < 3 {
+            selectedProfessions.append(profession)
+        }
+    }
+
+    private func professionSelectionText() -> String {
+        if selectedProfessions.isEmpty {
+            return "Select Profession(s)"
+        } else {
+            return selectedProfessions.joined(separator: ", ")
         }
     }
     private func signUpWithLocation(_ city: String) {
@@ -118,7 +170,10 @@ struct SignUpView: View {
                 return
             }
             print("User created successfully!")
-            self.dataManager.addUser(userProfession: newProfession, usersName: newName, emailAdd: newEmail, location: city)
+
+            // Ensure selectedProfessions is an array of selected profession strings
+            self.dataManager.addUser(userProfessions: selectedProfessions, usersName: newName, emailAdd: newEmail, location: city)
+
             self.isSignUpSuccess = true
             self.signInUser()
         }
@@ -142,6 +197,7 @@ struct SignUpView: View {
         newEmail = ""
         password = ""
     }
+    
 }
 private func geocodeAddress(_ address: String, completion: @escaping (String) -> Void) {
     CLGeocoder().geocodeAddressString(address) { placemarks, error in

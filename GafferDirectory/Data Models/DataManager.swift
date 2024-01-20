@@ -3,6 +3,21 @@ import CoreLocation
 import Firebase
 
 extension DataManager {
+    func fetchUserProfession(userId: String, completion: @escaping (String?) -> Void) {
+        let userRef = db.collection("Users").document(userId)
+        userRef.getDocument { document, error in
+            guard let document = document, document.exists, error == nil else {
+                print("Error fetching user profession:", error?.localizedDescription ?? "Unknown error")
+                completion(nil)
+                return
+            }
+            let profession = document.get("profession") as? String
+            completion(profession)
+        }
+    }
+}
+
+extension DataManager {
     func fetchCurrentUserJobs() {
         self.jobPostings.removeAll()
         guard let currentUserId = Auth.auth().currentUser?.uid else {
@@ -184,33 +199,40 @@ class DataManager: ObservableObject {
     }
     
     
-    func addUser(userProfession: String, usersName: String, emailAdd: String, location: String) {
-        if let userId = Auth.auth().currentUser?.uid {
-            let ref = db.collection("Users").document(userId)
+    func addUser(userProfessions: [String], usersName: String, emailAdd: String, location: String) {
+        guard let currentUser = Auth.auth().currentUser else {
+            print("User is not authenticated. Cannot add user.")
+            return
+        }
+
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(location) { placemarks, error in
+            guard error == nil, let placemark = placemarks?.first, let city = placemark.locality else {
+                print("Geocoding error: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+
+            let userId = currentUser.uid
+            let ref = self.db.collection("Users").document(userId)
 
             var userData: [String: Any] = [
                 "name": usersName,
-                "profession": userProfession,
+                "profession": userProfessions,
                 "id": userId,
                 "userId": userId,
-                "email": emailAdd
+                "email": emailAdd,
+                "location": city // Here we use the city obtained from geocoding
             ]
-            
-            // Add location data to userData
-            userData["location"] = location
 
-            ref.setData(userData) { (error) in
+            ref.setData(userData) { error in
                 if let error = error {
                     print("Error adding user:", error.localizedDescription)
                 } else {
-                    print("User added successfully")
+                    print("User added successfully with city: \(city)")
                 }
             }
-        } else {
-            print("User is not authenticated. Cannot add user.")
         }
     }
-
     func fetchUsers() {
             accounts.removeAll()
             let db = Firestore.firestore()
@@ -225,47 +247,79 @@ class DataManager: ObservableObject {
                         let data = document.data()
 
                         let id = data["id"] as? String ?? ""
-                        let profession = data["profession"] as? String ?? ""
+                        let professions = data["profession"] as? [String] ?? [] // Expect an array
                         let name = data["name"] as? String ?? ""
                         let email = data["email"] as? String ?? ""
                         let userId = data["userId"] as? String ?? ""
 
-                        let account = Account(id: id, userId: userId, name: name, profession: profession, email: email)
+                        let account = Account(id: id, userId: userId, name: name, professions: professions, email: email)
                         self.accounts.append(account)
                     }
                     print("Fetched \(self.accounts.count) users")
                 }
             }
         }
+    
+    func fetchUsersFilteredByProfession(professions: [String]) {
+            accounts.removeAll()
+            let db = Firestore.firestore()
+            let ref = db.collection("Users")
+            ref.getDocuments { snapshot, error in
+                guard error == nil else {
+                    print("Error fetching users:", error!.localizedDescription)
+                    return
+                }
+                if let snapshot = snapshot {
+                    for document in snapshot.documents {
+                        let data = document.data()
+
+                        let id = data["id"] as? String ?? ""
+                        let userProfessions = data["profession"] as? [String] ?? []
+                        let name = data["name"] as? String ?? ""
+                        let email = data["email"] as? String ?? ""
+                        let userId = data["userId"] as? String ?? ""
+
+                        if !professions.isEmpty && !userProfessions.contains(where: professions.contains) {
+                            continue
+                        }
+
+                        let account = Account(id: id, userId: userId, name: name, professions: userProfessions, email: email)
+                        self.accounts.append(account)
+                    }
+                    print("Fetched \(self.accounts.count) users with specified professions")
+                }
+            }
+        }
+
 
     func fetchUsersByUserId(userId: String, completion: @escaping ([Account]) -> Void) {
         accounts.removeAll()
         let db = Firestore.firestore()
         let ref = db.collection("Users").whereField("userId", isEqualTo: userId)
         ref.getDocuments { snapshot, error in
-                    guard error == nil else {
-                        print("Error fetching users by userID:", error!.localizedDescription)
-                        completion([])
-                        return
-                    }
-                    if let snapshot = snapshot {
-                        var userAccounts: [Account] = []
-                        for document in snapshot.documents {
-                            let data = document.data()
-
-                            let id = data["userId"] as? String ?? ""
-                            let profession = data["profession"] as? String ?? ""
-                            let name = data["name"] as? String ?? ""
-                            let email = data["email"] as? String ?? ""
-
-                            let account = Account(id: id, userId: userId, name: name, profession: profession, email: email)
-                            userAccounts.append(account)
-                        }
-                        print("Fetched \(userAccounts.count) users by userID")
-                        completion(userAccounts)
-                    }
-                }
+            guard error == nil else {
+                print("Error fetching users by userID:", error!.localizedDescription)
+                completion([])
+                return
             }
+            if let snapshot = snapshot {
+                var userAccounts: [Account] = []
+                for document in snapshot.documents {
+                    let data = document.data()
+
+                    let id = data["id"] as? String ?? "" // Corrected from userId to id
+                    let userProfessions = data["profession"] as? [String] ?? [] // Corrected variable name
+                    let name = data["name"] as? String ?? ""
+                    let email = data["email"] as? String ?? ""
+
+                    let account = Account(id: id, userId: userId, name: name, professions: userProfessions, email: email) // Corrected variable name
+                    userAccounts.append(account)
+                }
+                print("Fetched \(userAccounts.count) users by userID")
+                completion(userAccounts)
+            }
+        }
+    }
     func fetchUserData(userId: String, completion: @escaping (Account?) -> Void) {
         let db = Firestore.firestore()
         let ref = db.collection("Users").document(userId)
@@ -280,10 +334,10 @@ class DataManager: ObservableObject {
 
                 let id = data?["id"] as? String ?? ""
                 let name = data?["name"] as? String ?? ""
-                let profession = data?["profession"] as? String ?? ""
+                let userProfessions = data?["profession"] as? [String] ?? [] // Corrected variable name
                 let email = data?["email"] as? String ?? ""
-                let accounts = Account(id: id, userId: userId, name: name, profession: profession, email: email)
-                completion(accounts)
+                let account = Account(id: id, userId: userId, name: name, professions: userProfessions, email: email) // Corrected variable name
+                completion(account)
             } else {
                 completion(nil)
             }

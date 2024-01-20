@@ -7,20 +7,20 @@ struct ProfileView: View {
     @State private var favoriteAccounts: [Account] = []
     @State private var isListViewActive = false
     @State private var isJobBoardViewActive = false
-    @State private var isProfileActive = true
+    @State private var isProfileActive = false
     @State private var isSignInViewActive = false
     @State private var isSignedIn = true
     @State private var selectedUser: Account?
     @State private var isNavigatingToProfile = false
     @State private var favorites: Set<String> = []
-    
+ 
     var body: some View {
         NavigationView {
             VStack {
                 if let currentUser = currentUser {
                     Text("Name: \(currentUser.name)")
                         .font(.headline)
-                    Text("Profession: \(currentUser.profession)")
+                    Text("Profession: \(currentUser.professions.joined(separator: ", "))")
                         .font(.subheadline)
                 } else {
                     Text("No profile data found.")
@@ -38,7 +38,7 @@ struct ProfileView: View {
                                     Text("Name: \(account.name)")
                                         .font(.headline)
                                         .padding(.bottom, 5)
-                                    Text("Profession: \(account.profession)")
+                                    Text("Profession: \(account.professions.joined(separator: ", "))")
                                         .font(.subheadline)
                                         .padding(.bottom, 5)
                                 }
@@ -89,6 +89,9 @@ struct ProfileView: View {
                 .padding(.bottom, 8)
             }
             .navigationBarTitle("Profile View", displayMode: .inline)
+            .navigationBarItems(leading: NavigationLink(destination: ChatView()) {
+                Text("robot")
+            })
             .navigationBarBackButtonHidden(true)
             .onAppear {
                 setupView()

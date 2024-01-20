@@ -7,7 +7,7 @@
 import Foundation
 import Alamofire
 enum Constants {
-    static let openAIApiKey = "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"
+    static let openAIApiKey = "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"
     static let assistantId = "asst_RDhUOhslRVkgLUw13jNCvuG9"
 }
 

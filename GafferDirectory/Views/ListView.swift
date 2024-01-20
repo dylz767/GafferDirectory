@@ -11,24 +11,32 @@ struct ListView: View {
     @State private var favorites: Set<String> = []
     @State private var isSignedIn = true
     @State private var isNavigatingToProfile = false
-
+    @State private var selectedProfessionFilter: String?
+    
+    var filteredAccounts: [Account] {
+        if let filter = selectedProfessionFilter {
+            return dataManager.accounts.filter { $0.professions.contains(filter) }
+        }
+        return dataManager.accounts
+    }
+    
     var body: some View {
         NavigationView {
             VStack {
-                List(dataManager.accounts, id: \.id) { account in
+                List(filteredAccounts, id: \.id) { account in
                     HStack {
                         ZStack {
                             VStack(alignment: .leading) {
                                 Text("Name: \(account.name)")
                                     .font(.headline)
                                     .padding(.bottom, 5)
-                                Text("Profession: \(account.profession)")
+                                Text("Profession: \(account.professions.joined(separator: ", "))")
                                     .font(.subheadline)
                                     .padding(.bottom, 5)
                             }
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle()) // Makes the entire VStack tappable
+                            .contentShape(Rectangle())
                             .onTapGesture {
                                 selectedUser = account
                                 isNavigatingToProfile = true
@@ -45,8 +53,28 @@ struct ListView: View {
                     }
                 }
                 .onAppear {
-                    dataManager.fetchCurrentUserFavorites()
                     fetchData()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        print("First few account professions:")
+                        for account in dataManager.accounts.prefix(3) {
+                            print("\(account.name): \(account.professions)")
+                        }
+                    }
+
+                }
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Menu("Profession: None") {
+                            ForEach(["DP", "Gaffer", "Spark", "Producer", "Art Department", "HMUA", "Editor", "Colour Grade", "Runner", "Director", "Photographer", "Photographer Assistant"], id: \.self) { profession in
+                                Button(profession) {
+                                    selectedProfessionFilter = profession
+                                }
+                            }
+                            Button("Clear Filter") {
+                                selectedProfessionFilter = nil
+                            }
+                        }
+                    }
                 }
                 
                 Spacer()
@@ -72,9 +100,6 @@ struct ListView: View {
                 .padding(.bottom, 8)
             }
             .navigationBarTitle("Users", displayMode: .inline)
-            .navigationBarItems(leading: NavigationLink(destination: ChatView()) {
-                Text("robot")
-            })
             .fullScreenCover(item: $selectedUser) { user in
                 UserProfileView(user: user)
             }
@@ -97,8 +122,10 @@ struct ListView: View {
                 .hidden()
             )
         }
+        .onChange(of: selectedProfessionFilter) { _ in
+            fetchData()
+        }
         .navigationBarBackButtonHidden(true)
-        
     }
 
     private func fetchData() {

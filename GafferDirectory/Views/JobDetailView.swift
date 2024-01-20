@@ -83,6 +83,7 @@ struct JobDetailView: View {
             }
                                .padding()
                            }
+        
         .navigationBarTitle("Jobs Board")
         
         

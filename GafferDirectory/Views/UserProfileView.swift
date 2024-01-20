@@ -7,6 +7,7 @@ struct UserProfileView: View {
     @State private var isJobBoardViewActive = false
     @State private var isSignInViewActive = false
     @State private var isSignedIn = true
+    @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         NavigationView {
@@ -14,7 +15,7 @@ struct UserProfileView: View {
                 Text("Name: \(user.name)")
                     .padding(.bottom, 10)
 
-                Text("Profession: \(user.profession)")
+                Text("Profession: \(user.professions.joined(separator: ", "))")
                     .padding(.bottom, 10)
 
                 // Add more details as needed
@@ -49,7 +50,12 @@ struct UserProfileView: View {
                 .navigationBarItems(leading: EmptyView())
             }
             // Ensure JobBoardView is within NavigationView
-            .navigationBarBackButtonHidden(true)
+            .navigationBarItems(leading: Button("Back") {
+                presentationMode.wrappedValue.dismiss()
+            })
+            .onDisappear {
+    //            selectedJob = nil
+            }
             .background(
                         NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
                             EmptyView()

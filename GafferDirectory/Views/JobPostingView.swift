@@ -16,6 +16,11 @@ struct JobPostingView: View {
     @State private var navigateToJobDetails = false
     @State private var selectedRoles: [Profession] = [] // For storing selected roles
     @State private var selectedCrewMembers: [String: String] = [:] // Role: UserID
+    @State private var showingJobPostingView = false
+    @State private var showingJobDetailsView = false
+    @State private var postedJobID: String? = nil
+
+    @Environment(\.presentationMode) var presentationMode
     
 
     // All professions
@@ -64,6 +69,12 @@ struct JobPostingView: View {
             }
             .padding()
             .navigationBarTitle("Post a Job", displayMode: .inline)
+            .navigationBarItems(leading: Button(action: {
+                           // Action to dismiss the current view and go "Back"
+                           self.presentationMode.wrappedValue.dismiss()
+                       }) {
+                           Text("Back")
+                       })
             .navigationBarBackButtonHidden(true)
             .background(
                 VStack {
@@ -82,28 +93,96 @@ struct JobPostingView: View {
                 }
             )
         }
-        .navigationBarBackButtonHidden(false)
+        
+        .navigationBarBackButtonHidden(true)
     }
     
     private func postJob() {
         guard let userID = Auth.auth().currentUser?.uid else {
-                print("User ID is nil")
-                return
-            }
-        let newJobPosting = JobPosting(
+            print("User ID is nil")
+            return
+        }
+
+        var newJobPosting = JobPosting(
             id: UUID().uuidString,
             userID: userID,
             companyName: companyName,
             jobDescription: jobDescription,
-            coordinates: nil, // Coordinates need to be set if available
-            postcode: "", // Set the postcode if available
-            requiredProfessions: selectedRoles.map { $0.rawValue } // Map selected roles to their raw values
-            
+            coordinates: nil, // This will be set after geocoding
+            postcode: "",
+            requiredProfessions: selectedRoles.map { $0.rawValue }
         )
 
-        // Here, handle the geocoding if necessary and post the job using dataManager
-        dataManager.postJobWithGeocoding(jobPosting: newJobPosting, address: address, selectedRoles: selectedCrewMembers)
+        // Assuming `geocodeAddresses` is a function that geocodes the address and updates the job posting
+        geocodeAddresses([address]) { result in
+            switch result {
+                case .success(let geocodingResults):
+                    if let firstResult = geocodingResults.first {
+                        let (coordinates, postcode) = firstResult
+                        newJobPosting.coordinates = coordinates // Update the coordinates
+                        newJobPosting.postcode = postcode // Update the postcode if necessary
+
+                        // Proceed with posting the job using dataManager
+                        self.dataManager.postJobWithGeocoding(jobPosting: newJobPosting, address: self.address, selectedRoles: self.selectedCrewMembers)
+
+                        // Update state to trigger navigation
+                        self.postedJob = newJobPosting
+                        self.navigateToJobDetails = true
+                    }
+                case .failure(let error):
+                    print("Geocoding failed: \(error.localizedDescription)")
+                    // Handle the error appropriately
+                
+                DispatchQueue.main.async {
+                        // Step 1: Dismiss the current view
+                        self.presentationMode.wrappedValue.dismiss()
+
+                        // Step 2: Optionally delay the navigation to ensure the view is dismissed
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            self.postedJob = newJobPosting // Assuming this triggers the navigation
+                            self.navigateToJobDetails = true
+                        }
+                    }
+            }
+        }
     }
+    func geocodeAddresses(_ addresses: [String], completion: @escaping (Result<[(CLLocationCoordinate2D, String)], Error>) -> Void) {
+            let geocoder = CLGeocoder()
+            var geocodingResults: [(CLLocationCoordinate2D, String)] = []
+            var errors: [Error] = []
+
+            let dispatchGroup = DispatchGroup()
+
+            for address in addresses {
+                dispatchGroup.enter()
+
+                geocoder.geocodeAddressString(address) { (placemarks, error) in
+                    defer {
+                        dispatchGroup.leave()
+                    }
+
+                    if let error = error {
+                        errors.append(error)
+                        return
+                    }
+
+                    if let location = placemarks?.first?.location?.coordinate, let postcode = placemarks?.first?.postalCode {
+                        geocodingResults.append((location, postcode))
+                    } else {
+                        let customError = NSError(domain: "GeocodingErrorDomain", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid coordinates for address: \(address)"])
+                        errors.append(customError)
+                    }
+                }
+            }
+        dispatchGroup.notify(queue: .main) {
+                   if errors.isEmpty {
+                       completion(.success(geocodingResults))
+                   } else {
+                       completion(.failure(errors.first ?? NSError(domain: "GeocodingErrorDomain", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error"])))
+                   }
+               }
+           }
+
 }
 
 struct MultipleSelectionRow: View {

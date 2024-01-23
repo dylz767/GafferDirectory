@@ -12,6 +12,8 @@ struct ListView: View {
     @State private var isSignedIn = true
     @State private var isNavigatingToProfile = false
     @State private var selectedProfessionFilter: String?
+    @State private var isNotificationListViewActive = false
+    @State private var isNotificationsListViewActive = false // Added for navigation to NotificationListView
     
     var filteredAccounts: [Account] {
         if let filter = selectedProfessionFilter {
@@ -60,11 +62,18 @@ struct ListView: View {
                             print("\(account.name): \(account.professions)")
                         }
                     }
-
                 }
                 .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Menu("Profession: None") {
+                    ToolbarItemGroup(placement: .navigationBarLeading) {
+                        Button(action: {
+                            isNotificationsListViewActive = true
+                        }) {
+                            Image(systemName: "bell.fill")
+                                .accessibilityLabel("Notifications")
+                        }
+                    }
+                    ToolbarItemGroup(placement: .navigationBarTrailing) {
+                        Menu("Filter") {
                             ForEach(["DP", "Gaffer", "Spark", "Producer", "Art Department", "HMUA", "Editor", "Colour Grade", "Runner", "Director", "Photographer", "Photographer Assistant"], id: \.self) { profession in
                                 Button(profession) {
                                     selectedProfessionFilter = profession
@@ -104,6 +113,14 @@ struct ListView: View {
                 UserProfileView(user: user)
             }
             .background(
+                NavigationLink(destination: NotificationListView(dataManager: self.dataManager), isActive: $isNotificationsListViewActive) {
+                    // Your link content here
+                
+                    EmptyView()
+                }
+                .hidden()
+            )
+            .background(
                 NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
                     EmptyView()
                 }
@@ -142,18 +159,6 @@ struct ListView: View {
         } else {
             dataManager.addFavorite(favoriteId: id)
             favorites.insert(id)
-        }
-    }
-}
-
-struct FavoriteButton: View {
-    var isFavorite: Bool
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: isFavorite ? "star.fill" : "star")
-                .foregroundColor(isFavorite ? .yellow : .gray)
         }
     }
 }

@@ -19,6 +19,7 @@ struct JobPostingView: View {
     @State private var showingJobPostingView = false
     @State private var showingJobDetailsView = false
     @State private var postedJobID: String? = nil
+    @State private var isLocationValid: Bool? = nil
 
     @Environment(\.presentationMode) var presentationMode
     
@@ -55,7 +56,13 @@ struct JobPostingView: View {
                                    }
                                }
 
-
+                if isLocationValid == false {
+                    Text("Enter valid location")
+                }
+                else
+                {
+                    
+                }
                 Button("Post Job") {
                     postJob()
                 }
@@ -80,7 +87,7 @@ struct JobPostingView: View {
                 VStack {
                     if let postedJob = postedJob{
                         NavigationLink(
-                            destination: JobDetailView(jobPosting: postedJob),
+                            destination: JustPostedJobDetailView(jobPosting: postedJob),
                             isActive: $navigateToJobDetails
                         ) {
                             EmptyView()

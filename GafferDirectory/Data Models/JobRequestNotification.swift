@@ -1,25 +1,23 @@
 import SwiftUI
 import CoreLocation
 import Foundation
+import Firebase
 
-struct JobNotification: Identifiable, Hashable {
+struct JobRequestNotification: Identifiable, Hashable {
     var id: String
-    var type: NotificationType // e.g., jobRequest, jobApplication
-    var senderId: String // User who sent the notification
-    var receiverId: String // User who receives the notification
-    var jobPostingId: String // Associated job posting
-    var message: String // Custom message if needed
-    var status: NotificationStatus // e.g., pending, accepted, declined
-    var timestamp: Date // When the notification was created
-}
-
-enum NotificationType: String {
-    case jobRequest
-    case jobApplication
+    var jobId: String
+    var senderId: String // Job creator's user ID
+    var receiverId: String // Professional's user ID
+    var companyName: String
+    var jobDescription: String
+    var status: NotificationStatus = .pending // Initial status
+    var timestamp: Date
 }
 
 enum NotificationStatus: String {
-    case pending
-    case accepted
-    case declined
+    case pending = "Pending"
+    case accepted = "Accepted"
+    case declined = "Declined"
 }
+
+

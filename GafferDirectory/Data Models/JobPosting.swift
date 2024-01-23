@@ -9,6 +9,7 @@ struct JobPosting: Identifiable, Hashable {
     var coordinates: CLLocationCoordinate2D?
     var postcode: String
     var requiredProfessions: [String] = []
+    var jobRequests: [JobRequest] = [] // New field to track job requests
 
     // Add more properties as needed
 

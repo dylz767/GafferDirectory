@@ -1,8 +1,10 @@
 import SwiftUI
 import CoreLocation
 import MapKit
+import Firebase
 
 struct JobDetailView: View {
+    @EnvironmentObject var currentJobVM: CurrentJobViewModel
     let jobPosting: JobPosting
     @EnvironmentObject var dataManager: DataManager
     @State private var isUsersViewPresented: Bool = false
@@ -18,6 +20,7 @@ struct JobDetailView: View {
     @State private var isJobBoardViewActive = false
     @State private var isSignInViewActive = false
     @State private var isSignedIn = true
+
 
     var body: some View {
         NavigationView {
@@ -43,6 +46,15 @@ struct JobDetailView: View {
                                         Button("Find \(profession)") {
                                             selectedProfession = profession
                                             fetchUsersForProfession(profession)
+                                         
+                                            print("Current job set to: \(jobPosting.companyName)")
+                                        }
+                                    }
+                                    else  {
+                                        Button("\(profession) Needed") {
+                                            
+                                            //notify the creator of the job you're interested
+                                            //userID of job should be equal to a users ID
                                         }
                                     }
                                 }
@@ -100,6 +112,7 @@ struct JobDetailView: View {
                 .onChange(of: filteredUsers) { newValue in
                     if !newValue.isEmpty {
                         isUsersViewPresented = true
+                        print("isUsersViewPresented changed to: \(newValue)")
                     }
                 }
                 CustomNavigationBar(
@@ -130,7 +143,9 @@ struct JobDetailView: View {
             }
             .sheet(isPresented: $isUsersViewPresented) {
                 UsersListView(users: filteredUsers)
-                }
+                    .environmentObject(dataManager)
+//                    .environmentObject(currentJobVM)
+            }
             .background(
                         NavigationLink(destination: ProfileView(), isActive: $isProfileActive) {
                             EmptyView()
@@ -156,8 +171,18 @@ struct JobDetailView: View {
                         .hidden()
                     )
         }
+        .navigationBarItems(leading: Button("Back") {
+            presentationMode.wrappedValue.dismiss()
+        })
         .navigationBarBackButtonHidden(true)
+        .onAppear {
+                    self.currentJobVM.currentJob = self.jobPosting
+                }
+        .onDisappear {
+            self.currentJobVM.currentJob = nil
+        }
     }
+        
     private func fetchAddress() {
             guard let coordinates = jobPosting.coordinates else {
                 address = "Location not provided."
@@ -195,7 +220,15 @@ struct JobDetailView: View {
             }
         }
     }
-}
+    private func sendInterestNotification(profession: String) {
+//        guard let currentJob = currentJobVM.currentJob else {
+            print("No current job found.")
+            return
+        }
+        // Use currentJob directly without needing to fetch it again
+//        dataManager.sendJobRequest(to: jobPosting.userID, for: currentJob)
+    }
+//}
 struct MapView: View {
     var coordinates: CLLocationCoordinate2D
     var placemarkTitle: String
@@ -257,21 +290,58 @@ extension CLPlacemark {
         return nonNilComponents.joined(separator: ", ")
     }
 }
+class CurrentJobViewModel: ObservableObject {
+    @Published var currentJob: JobPosting?
+}
+
+//a page to send job requests to a list of users matching the required profession
 struct UsersListView: View {
     var users: [Account]
-    
+    @EnvironmentObject var currentJobVM: CurrentJobViewModel
+    @EnvironmentObject var dataManager: DataManager
 
     var body: some View {
-        List(users, id: \.id) { user in
-            VStack(alignment: .leading) {
-                Text(user.name).bold()
-                Text(user.email)
-                Text("Professions: \(user.professions.joined(separator: ", "))")
+        VStack{
+            List(users, id: \.id) { user in
+                HStack {
+                    ZStack {
+                        VStack(alignment: .leading) {
+                            Text(user.name).bold()
+                                .font(.headline)
+                                .padding(.bottom, 5)
+                            Text(user.email)
+                                .font(.subheadline)
+                                .padding(.bottom, 5)
+                            Text("Professions: \(user.professions.joined(separator: ", "))")
+                            
+                        }
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        Spacer()
+                    }
+                    Button("Send Request") {
+                        if let currentJob = currentJobVM.currentJob {
+                            print("Current job found, sending request.")
+                            // Assuming you have a method in DataManager to send a job request
+                            // You might need to adjust parameters according to your method signature
+                            dataManager.sendJobRequest(to: user.id, for: currentJob)
+                        } else {
+                            print("No current job found.")
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                }
             }
+            
         }
         .navigationBarTitle("Candidates", displayMode: .inline)
         .onAppear {
             print("UsersListView appeared with \(users.count) users")
+//            print("Current Job: \(String(describing: currentJobVM.currentJob))")
         }
     }
 }

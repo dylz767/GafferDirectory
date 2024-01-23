@@ -5,7 +5,8 @@ import Firebase
 @main
 struct GafferDirectoryApp: App {
     @StateObject var dataManager = DataManager()
-
+//    @StateObject var currentJobVM = CurrentJobViewModel()
+    
     init() {
         FirebaseApp.configure()
 
@@ -15,6 +16,7 @@ struct GafferDirectoryApp: App {
         WindowGroup {
             MainView()
                 .environmentObject(dataManager)
+//                .environmentObject(currentJobVM) 
         }
     }
 }

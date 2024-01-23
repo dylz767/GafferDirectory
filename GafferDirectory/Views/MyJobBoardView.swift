@@ -35,11 +35,18 @@ struct MyJobBoardView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
-                .navigationBarTitle("My Job Board", displayMode: .inline)
+                .navigationBarTitle("Job Board", displayMode: .inline)
                 .navigationBarItems(leading: NavigationLink(destination: JobPostingView()) {
                     Text("Post a Job")
-                })
+                }
+                )
                 .navigationBarBackButtonHidden(true)
+                .navigationBarItems(trailing: NavigationLink(destination: JobBoardView()) {
+                    Text("All Jobs")
+                }
+                )
+                .navigationBarBackButtonHidden(true)
+//                .navigationBarBackButtonHidden(true)
                 
                 Spacer()
                 

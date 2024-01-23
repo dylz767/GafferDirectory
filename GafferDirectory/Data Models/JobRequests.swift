@@ -1,18 +1,35 @@
-//
-//  JobRequests.swift
-//  GafferDirectory
-//
-//  Created by Dylon Angol on 22/01/2024.
-//
+import FirebaseFirestore
 
-import SwiftUI
+struct JobRequest: Identifiable, Hashable, Decodable { 
+    var id: String
+    var userId: String
+    var jobId: String
+    var senderId: String
+    var companyName: String
+    var jobDescription: String
+    var status: String
+    var timestamp: Date
 
-struct JobRequests: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+    
+    
+    init(id: String, dictionary: [String: Any]) {
+        self.id = id
+        self.userId = dictionary["userId"] as? String ?? ""
+        self.jobId = dictionary["jobId"] as? String ?? ""
+        self.senderId = dictionary["senderId"] as? String ?? ""
+        self.companyName = dictionary["companyName"] as? String ?? ""
+        self.jobDescription = dictionary["jobDescription"] as? String ?? ""
+        self.status = dictionary["status"] as? String ?? ""
+        self.timestamp = (dictionary["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+    }
+     
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
-
-#Preview {
-    JobRequests()
+extension JobRequest: Equatable {
+    static func == (lhs: JobRequest, rhs: JobRequest) -> Bool {
+        return lhs.id == rhs.id
+    }
 }

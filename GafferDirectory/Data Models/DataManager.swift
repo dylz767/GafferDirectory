@@ -177,8 +177,66 @@ extension DataManager {
            }
        }
 }
+extension DataManager {
+    func respondToJobRequest(_ requestId: String, accept: Bool) {
+        let requestRef = db.collection("jobRequests").document(requestId)
+        
+        if accept {
+            // Update the request's status to "accepted"
+            requestRef.updateData(["status": "accepted"])
+        } else {
+            // Remove the request from the user's account and delete or update the request
+            requestRef.updateData(["status": "declined"]) { error in
+                if let error = error {
+                    print("Error updating job request status: \(error.localizedDescription)")
+                } else {
+                    // Assuming the current user is the one responding to the request
+                    let currentUserRef = self.db.collection("Users").document(self.currentUserId)
+                    currentUserRef.updateData([
+                        "jobRequests": FieldValue.arrayRemove([requestId])
+                    ])
+                }
+            }
+        }
+    }
+}
+extension DataManager {
+    func sendJobRequest(to receiverId: String, for job: JobPosting) {
+        // Create job request document in "jobRequests" collection
+        let jobRequestRef = db.collection("jobRequests").document()
+        let jobRequestId = jobRequestRef.documentID
+        let jobRequestData: [String: Any] = [
+            "id": jobRequestId,
+            "jobId": job.id,
+            "senderId": currentUserId,
+            "receiverId": receiverId,
+            "companyName": job.companyName,
+            "jobDescription": job.jobDescription,
+            "status": "pending",
+            "timestamp": Timestamp(date: Date()) // Use Firestore Timestamp for the current time
+        ]
+
+        jobRequestRef.setData(jobRequestData) { error in
+            if let error = error {
+                print("Error sending job request: \(error.localizedDescription)")
+            } else {
+                // Update receiver's account with the job request ID
+                let receiverRef = self.db.collection("Users").document(receiverId)
+                receiverRef.updateData([
+                    "jobRequests": FieldValue.arrayUnion([jobRequestId])
+                ]) { error in
+                    if let error = error {
+                        print("Error adding job request to user account: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+    }
+}
 
 class DataManager: ObservableObject {
+    
+    
     @Published var accounts: [Account] = []
     @Published var users: [User] = []
     @Published var jobPostings: [JobPosting] = []
@@ -187,6 +245,7 @@ class DataManager: ObservableObject {
     @Published var currentUserFavorites: Set<String> = []
     @Published var jobPostedID: String? = nil
     @Published var selectedCrewMembers: [String: String] = [:]
+    @Published var jobRequests: [JobRequest] = []
     
     var currentUserId: String {
             return Auth.auth().currentUser?.uid ?? ""
@@ -199,6 +258,103 @@ class DataManager: ObservableObject {
         fetchUsers()
     }
     
+    // Modify this function to only fetch job requests for the current user
+    func fetchJobRequestsForCurrentUser() {
+        let userId = currentUserId
+        
+        // Assuming you want to fetch jobRequests for job postings created by the current user
+        db.collection("jobRequests")
+            .whereField("receiverId", isEqualTo: userId)
+            // Optionally, further filter by jobId if needed
+            .addSnapshotListener { querySnapshot, error in
+                if let error = error {
+                    print("Error fetching job requests: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let documents = querySnapshot?.documents else {
+                    print("No job requests found")
+                    return
+                }
+                
+                self.jobRequests = documents.compactMap { queryDocumentSnapshot -> JobRequest? in
+                    let data = queryDocumentSnapshot.data()
+                    let jobId = data["jobId"] as? String ?? ""
+                    // Optionally, check if jobId matches one of the user's job postings if needed
+                    
+                    return JobRequest(id: queryDocumentSnapshot.documentID, dictionary: data)
+                }
+            }
+    }
+    func handleJobRequestDataFromFirestore() {
+        // Assuming you have retrieved job request data from Firestore
+        let jobRequestData: [String: Any] = [
+            "id": "request123",
+            "userId": "user123",
+            "jobId": "job456",
+            "senderId": "sender789",
+            "companyName": "Example Company",
+            "jobDescription": "Sample job description",
+            "status": "pending",
+            "timestamp": Timestamp(date: Date())
+        ]
+
+        // Initialize a JobRequest object using the dictionary
+        let jobRequest = JobRequest(id: "request123", dictionary: jobRequestData)
+
+        // Now you can work with the jobRequest object as needed
+        print("Job Request ID: \(jobRequest.id)")
+        print("Job Description: \(jobRequest.jobDescription)")
+        // ... perform other operations with the jobRequest object ...
+    }
+    func sendJobRequestNotification(_ notification: JobRequestNotification) {
+        let db = Firestore.firestore()
+        var ref: DocumentReference? = nil
+        ref = db.collection("jobRequests").addDocument(data: [
+            "id": notification.id,
+            "jobId": notification.jobId,
+            "senderId": notification.senderId,
+            "receiverId": notification.receiverId,
+            "companyName": notification.companyName,
+            "jobDescription": notification.jobDescription,
+            "status": notification.status.rawValue,
+            "timestamp": FieldValue.serverTimestamp()
+        ]) { err in
+            if let err = err {
+                print("Error adding document: \(err)")
+            } else {
+                print("Document added with ID: \(ref!.documentID)")
+            }
+        }
+    }
+    
+   
+    func updateNotificationStatus(_ notificationId: String, _ status: NotificationStatus) {
+            let db = Firestore.firestore()
+            db.collection("jobRequests").document(notificationId).updateData(["status": status]) { error in
+                if let error = error {
+                    print("Error updating notification status: \(error.localizedDescription)")
+                } else {
+                    print("Notification status updated successfully.")
+                }
+            }
+        }
+
+        // Adds a job ID to a user's approved job list
+        func addUserApprovedJob(_ userId: String, _ jobId: String) {
+            let db = Firestore.firestore()
+            // Assuming you have a collection for users where each user document contains an approvedJobs field
+            // This field should be an array of job IDs
+            db.collection("users").document(userId).updateData([
+                "approvedJobs": FieldValue.arrayUnion([jobId])
+            ]) { error in
+                if let error = error {
+                    print("Error adding job to user's approved list: \(error.localizedDescription)")
+                } else {
+                    print("Job added to user's approved list successfully.")
+                }
+            }
+        }
     
     func addUser(userProfessions: [String], usersName: String, emailAdd: String, location: String) {
         guard let currentUser = Auth.auth().currentUser else {

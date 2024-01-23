@@ -18,6 +18,7 @@ struct Account: Identifiable, Hashable {
     var coordinates: CLLocationCoordinate2D?
     var favorites: [String]? // Optional, depending on your design choice
     // ... other properties and methods ...
+    var jobRequests: [String]? // Array of job request IDs
 
 
     // Ensure the struct is Hashable

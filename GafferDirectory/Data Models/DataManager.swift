@@ -52,6 +52,19 @@ extension DataManager {
     }
 }
 extension DataManager {
+    func updateJobRequestStatus(requestId: String, newStatus: NotificationStatus) {
+        let requestRef = db.collection("jobRequests").document(requestId)
+        
+        requestRef.updateData(["status": newStatus.rawValue]) { error in
+            if let error = error {
+                print("Error updating job request status: \(error.localizedDescription)")
+            } else {
+                print("Job request status updated to \(newStatus.rawValue)")
+            }
+        }
+    }
+}
+extension DataManager {
     // MARK: Favorites Management
     func fetchCurrentUserFavorites() {
         guard let currentUserId = Auth.auth().currentUser?.uid else {

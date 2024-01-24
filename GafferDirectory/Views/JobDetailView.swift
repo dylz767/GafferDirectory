@@ -299,9 +299,10 @@ struct UsersListView: View {
     var users: [Account]
     @EnvironmentObject var currentJobVM: CurrentJobViewModel
     @EnvironmentObject var dataManager: DataManager
+    @State private var requestsSent = Set<String>()
 
     var body: some View {
-        VStack{
+        VStack {
             List(users, id: \.id) { user in
                 HStack {
                     ZStack {
@@ -313,35 +314,42 @@ struct UsersListView: View {
                                 .font(.subheadline)
                                 .padding(.bottom, 5)
                             Text("Professions: \(user.professions.joined(separator: ", "))")
-                            
                         }
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                         Spacer()
                     }
-                    Button("Send Request") {
-                        if let currentJob = currentJobVM.currentJob {
-                            print("Current job found, sending request.")
-                            // Assuming you have a method in DataManager to send a job request
-                            // You might need to adjust parameters according to your method signature
-                            dataManager.sendJobRequest(to: user.id, for: currentJob)
-                        } else {
-                            print("No current job found.")
+                    if requestsSent.contains(user.id) {
+                        Text("Request Sent")
+                            .foregroundColor(.gray)
+                            .padding()
+                            .background(Color.green)
+                            .cornerRadius(8)
+                    } else {
+                        Button("Send Request") {
+                            if let currentJob = currentJobVM.currentJob {
+                                print("Current job found, sending request to \(user.name).")
+                                // Assuming you have a method in DataManager to send a job request
+                                // You might need to adjust parameters according to your method signature
+                                dataManager.sendJobRequest(to: user.id, for: currentJob)
+                                // Mark this user as having a request sent
+                                requestsSent.insert(user.id)
+                            } else {
+                                print("No current job found.")
+                            }
                         }
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(8)
                     }
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(8)
                 }
             }
-            
         }
         .navigationBarTitle("Candidates", displayMode: .inline)
         .onAppear {
             print("UsersListView appeared with \(users.count) users")
-//            print("Current Job: \(String(describing: currentJobVM.currentJob))")
         }
     }
 }
